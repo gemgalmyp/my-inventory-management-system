@@ -1,10 +1,10 @@
 import os
 from tkinter import *
-# from tkinter import PhotoImage
+# from PIL import Image, ImageTk
 
 window = Tk()
 window.title("ARSE ELECTRONICS IMS")
-window.geometry("1420x810+0+0")
+window.geometry("1420x800+0+0")
 window.resizable(0,0)
 window.config(bg="#bdbdbd")
 
@@ -59,5 +59,92 @@ imageLabel = Label(leftFrame, image=logoImage)
 # imageLabel.grid(row=0, column=0)
 imageLabel.place(x=0, y=5, width=300, height=200)
 # imageLabel.pack(fill=BOTH)
+
+menuLabel = Label(
+    leftFrame,
+    text="Menu",
+    font=("Franklin Gothic Book (Headings)", 20),
+    bg="#054b2e",
+    fg="white"
+)
+menuLabel.place(x=0, y=210, width=300, height=70)
+
+
+employee_icon = PhotoImage(file="employees.png")
+EmployeeButton = Button(
+    leftFrame,
+    text=" Employees",
+    image=employee_icon,
+    compound=LEFT,
+    font=("Franklin Gothic Book (Headings)", 16, "bold"),
+    anchor="w",
+    padx=40
+)
+EmployeeButton.place(x=0, y=295, width=300, height=60)
+
+
+supplier_icon = PhotoImage(file="supplier.png")
+SupplierButton = Button(
+    leftFrame,
+    text=" Supplier",
+    image=supplier_icon,
+    compound=LEFT,
+    font=("Franklin Gothic Book (Headings)", 16, "bold"),
+    anchor="w",
+    padx=40
+)
+SupplierButton.place(x=0, y=355, width=300, height=60)
+
+
+category_icon = PhotoImage(file="category.png")
+CategoryButton = Button(
+    leftFrame,
+    text=" Categories",
+    image=category_icon,
+    compound=LEFT,
+    font=("Franklin Gothic Book (Headings)", 16, "bold"),
+    anchor="w",
+    padx=40
+)
+CategoryButton.place(x=0, y=415, width=300, height=60)
+
+
+product_icon = PhotoImage(file="product.png")
+ProductButton = Button(
+    leftFrame,
+    text=" Products",
+    image=product_icon,
+    compound=LEFT,
+    font=("Franklin Gothic Book (Headings)", 16, "bold"),
+    anchor="w",
+    padx=40
+)
+ProductButton.place(x=0, y=475, width=300, height=60)
+
+
+sales_icon = PhotoImage(file="sales.png")
+SalesButton = Button(
+    leftFrame,
+    text=" Sales",
+    image=sales_icon,
+    compound=LEFT,
+    font=("Franklin Gothic Book (Headings)", 16, "bold"),
+    anchor="w",
+    padx=40
+)
+SalesButton.place(x=0, y=535, width=300, height=60)
+
+
+exit_icon = PhotoImage(file="exit.png")
+ExitButton = Button(
+    leftFrame,
+    text=" Exit",
+    image=exit_icon,
+    compound=LEFT,
+    font=("Franklin Gothic Book (Headings)", 16, "bold"),
+    anchor="w",
+    padx=40
+)
+ExitButton.place(x=0, y=595, width=300, height=60)
 
 window.mainloop()
