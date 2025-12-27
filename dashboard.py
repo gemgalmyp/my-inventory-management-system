@@ -1,8 +1,34 @@
 import os
 from tkinter import *
-# from PIL import Image, ImageTk
+# from PIL import Image, ImageTk # This is for handling images if needed (.jpg)
 
+# Functionality Part
+def employee_form():
+    global back_image
+    employee_frame = Frame(window)
+    employee_frame.place(x=320, y=130, width=1100, height=680)
+    heading_label = Label(
+        employee_frame, 
+        text="Manage Employee Details", 
+        font=("Franklin Gothic Book (Headings)", 17, "bold"), 
+        bg="#045517", 
+        fg="white"
+    )
+    heading_label.place(x=0, y=0, relwidth=1)
+    back_image = PhotoImage(file="back_button.png")
+    back_button = Button(
+        employee_frame,
+        image=back_image,
+        bd = 0,
+        cursor = "hand2",
+        command=lambda: employee_frame.place_forget()   
+    )
+    back_button.place(x=10, y=40)
+
+
+#GUI Part
 window = Tk()
+
 window.title("ARSE ELECTRONICS IMS")
 window.geometry("1420x800+0+0")
 window.resizable(0,0)
@@ -70,78 +96,85 @@ menuLabel = Label(
 )
 menuLabel.place(x=0, y=210, width=300, height=70)
 
-
+# Employee Button
 employee_icon = PhotoImage(file="employees.png")
 EmployeeButton = Button(
     leftFrame,
     text=" Employees",
     image=employee_icon,
     compound=LEFT,
+    cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
-    padx=40
+    padx=40,
+    command=employee_form
 )
 EmployeeButton.place(x=0, y=295, width=300, height=60)
 
-
+# Supplier Button
 supplier_icon = PhotoImage(file="supplier.png")
 SupplierButton = Button(
     leftFrame,
     text=" Supplier",
     image=supplier_icon,
     compound=LEFT,
+    cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40
 )
 SupplierButton.place(x=0, y=355, width=300, height=60)
 
-
+# Category Button
 category_icon = PhotoImage(file="category.png")
 CategoryButton = Button(
     leftFrame,
     text=" Categories",
     image=category_icon,
     compound=LEFT,
+    cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40
 )
 CategoryButton.place(x=0, y=415, width=300, height=60)
 
-
+# Product Button
 product_icon = PhotoImage(file="product.png")
 ProductButton = Button(
     leftFrame,
     text=" Products",
     image=product_icon,
     compound=LEFT,
+    cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40
 )
 ProductButton.place(x=0, y=475, width=300, height=60)
 
-
+# Sales Button
 sales_icon = PhotoImage(file="sales.png")
 SalesButton = Button(
     leftFrame,
     text=" Sales",
     image=sales_icon,
     compound=LEFT,
+    cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40
 )
 SalesButton.place(x=0, y=535, width=300, height=60)
 
-
+# Exit Button
 exit_icon = PhotoImage(file="exit.png")
 ExitButton = Button(
     leftFrame,
     text=" Exit",
     image=exit_icon,
     compound=LEFT,
+    cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40
