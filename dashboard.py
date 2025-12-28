@@ -1,11 +1,12 @@
 import os
 from tkinter import *
+from tkinter import ttk
 # from PIL import Image, ImageTk # This is for handling images if needed (.jpg)
 
 # Functionality Part
 def employee_form():
     global back_image
-    employee_frame = Frame(window)
+    employee_frame = Frame(window, width=1100, height=680, bg="white")
     employee_frame.place(x=320, y=130, width=1100, height=680)
     heading_label = Label(
         employee_frame, 
@@ -21,9 +22,51 @@ def employee_form():
         image=back_image,
         bd = 0,
         cursor = "hand2",
+        bg="white",
         command=lambda: employee_frame.place_forget()   
     )
     back_button.place(x=10, y=40)
+
+    top_frame = Frame(employee_frame, bg="white")
+    top_frame.place(x=0, y=70, relwidth=1, height=235)
+    search_frame = Frame(top_frame, bg="white")
+    search_frame.pack()
+    search_combobox = ttk.Combobox(
+        search_frame, 
+        values=('ID', 'Name', 'Email', 'Contact'),
+        font=("Franklin Gothic Book (Headings)", 11),
+        state='readonly',
+        cursor="hand2"
+    )
+    search_combobox.set('Search By')
+    search_combobox.grid(row=0, column=0, padx=20)
+    search_entry = Entry(
+        search_frame, 
+        font=("Franklin Gothic Book (Headings)", 11), width=20,
+        bg="lemon chiffon"
+    )
+    search_entry.grid(row=0, column=1, padx=20)
+    search_button = Button(
+        search_frame, 
+        text="Search", 
+        font=("Franklin Gothic Book (Headings)", 11), width=10,
+        cursor="hand2", 
+        bg="#045517", 
+        fg="white", 
+        padx=10
+    )
+    search_button.grid(row=0, column=2, padx=20)
+    show_all_button = Button(
+        search_frame, 
+        text="Show All", 
+        font=("Franklin Gothic Book (Headings)", 11), width=10,
+        cursor="hand2", 
+        bg="#045517", 
+        fg="white", 
+        padx=10
+    )
+    show_all_button.grid(row=0, column=3)
+
 
 
 #GUI Part
