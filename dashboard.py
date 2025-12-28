@@ -67,6 +67,40 @@ def employee_form():
     )
     show_all_button.grid(row=0, column=3)
 
+    horizontal_scrollbar = Scrollbar(top_frame, orient=HORIZONTAL)
+    vertical_scrollbar = Scrollbar(top_frame, orient=VERTICAL)
+
+    employee_treeview = ttk.Treeview(
+        top_frame, 
+        columns=('emp_id', 'name', 'gender', 'email', 'contact', 'dob', 'address', 'usertype'),
+        show='headings',
+        yscrollcommand=vertical_scrollbar.set,
+        xscrollcommand=horizontal_scrollbar.set
+    )
+    horizontal_scrollbar.pack(side=BOTTOM, fill=X)
+    vertical_scrollbar.pack(side=RIGHT, fill=Y, pady=(10,0))
+    horizontal_scrollbar.config(command=employee_treeview.xview)
+    vertical_scrollbar.config(command=employee_treeview.yview)
+
+    employee_treeview.pack(pady=(10,0))
+    employee_treeview.heading('emp_id', text='Employee ID')
+    employee_treeview.heading('name', text='Name')
+    employee_treeview.heading('gender', text='Gender')
+    employee_treeview.heading('email', text='Email')
+    employee_treeview.heading('contact', text='Contact')
+    employee_treeview.heading('dob', text='Date of Birth')
+    employee_treeview.heading('address', text='Address')
+    employee_treeview.heading('usertype', text='User Type')
+
+    employee_treeview.column('emp_id', width=90)
+    employee_treeview.column('name', width=200)
+    employee_treeview.column('gender', width=60)
+    employee_treeview.column('email', width=200)
+    employee_treeview.column('contact', width=120)
+    employee_treeview.column('dob', width=100)
+    employee_treeview.column('address', width=200)
+    employee_treeview.column('usertype', width=120)
+
 
 
 #GUI Part
