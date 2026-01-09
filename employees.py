@@ -6,14 +6,14 @@ import pyodbc as odbc
 
 
 def connect_db(
-        server=r'DESKTOP-UF7FUTA\\SQLEXPRESS', database='IMS', driver='ODBC Driver 17 for SQL Server', uid=None, pwd=None, trusted=True):
+        server=r'DESKTOP-UF7FUTA\\SQLEXPRESS', database='IMS', driver='ODBC 18 for SQL Server', uid=None, pwd=None, trusted=False):
     """
     Connect to SQL Server and ensure the `database` and `employee_data` table exist.
     - By default uses Windows Trusted Connection. To use SQL auth, pass uid and pwd and set trusted=False.
     - Returns a pyodbc.Connection or None on failure.
     """
     try:
-        # connect to master to ensure database exists
+        
         if uid and pwd and not trusted:
             conn_master = odbc.connect(f"DRIVER={{{driver}}};SERVER={server};DATABASE=master;UID={uid};PWD={pwd}")
         else:
@@ -34,7 +34,7 @@ def connect_db(
         cur.close()
         conn_master.close()
 
-        # connect to the target database
+       
         if uid and pwd and not trusted:
             conn = odbc.connect(f"DRIVER={{{driver}}};SERVER={server};DATABASE={database};UID={uid};PWD={pwd}")
         else:
@@ -83,6 +83,7 @@ def fetch_employees(conn):
     except Exception as e:
         messagebox.showerror("Database Error", f"Failed to fetch employees: {e}")
         return []
+
 
 
 
