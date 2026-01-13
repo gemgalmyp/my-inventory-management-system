@@ -2,87 +2,67 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkcalendar import DateEntry
-import pyodbc as odbc
+import pyodbc
 
 
-def connect_db(
-        server=r'DESKTOP-UF7FUTA\\SQLEXPRESS', database='IMS', driver='ODBC 18 for SQL Server', uid=None, pwd=None, trusted=False):
-    """
-    Connect to SQL Server and ensure the `database` and `employee_data` table exist.
-    - By default uses Windows Trusted Connection. To use SQL auth, pass uid and pwd and set trusted=False.
-    - Returns a pyodbc.Connection or None on failure.
-    """
-    try:
-        
-        if uid and pwd and not trusted:
-            conn_master = odbc.connect(f"DRIVER={{{driver}}};SERVER={server};DATABASE=master;UID={uid};PWD={pwd}")
-        else:
-            conn_master = odbc.connect(f"DRIVER={{{driver}}};SERVER={server};DATABASE=master;Trusted_Connection=yes")
-    except Exception as e:
-        messagebox.showerror("Database Error", f"Failed to connect to SQL Server: {e}")
-        return None
+connection_string = (
+    "Driver={ODBC Driver 17 for SQL Server};"
+    "Server=DESKTOP-UF7FUTA\\SQLEXPRESS;"  
+    "Database=IMS;"
+    "Trusted_Connection=yes;"
 
-    try:
-        conn_master.autocommit = True
-        cur = conn_master.cursor()
-        cur.execute(f"""
-            IF DB_ID(N'{database}') IS NULL
-            BEGIN
-                CREATE DATABASE [{database}];
-            END
-        """)
-        cur.close()
-        conn_master.close()
+    # "Data Source=DESKTOP-UF7FUTA\\SQLEXPRESS;"
+    # "Integrated Security=True;"
+    # "Persist Security Info=False;"
+    # "Pooling=False;"
+    # "MultipleActiveResultSets=False;"
+    # "Encrypt=True;"
+    # "TrustServerCertificate=True;"
+    # "Application Name=SQL Server Management Studio;"
+    # "Command Timeout=30;"
+)
 
-       
-        if uid and pwd and not trusted:
-            conn = odbc.connect(f"DRIVER={{{driver}}};SERVER={server};DATABASE={database};UID={uid};PWD={pwd}")
-        else:
-            conn = odbc.connect(f"DRIVER={{{driver}}};SERVER={server};DATABASE={database};Trusted_Connection=yes")
+try:
+    # Establish the connection
+    conn = pyodbc.connect(connection_string)
+    cursor = conn.cursor()
+    print("Connection successful using Windows Authentication!")
 
-        cur = conn.cursor()
-        cur.execute("""
-            IF OBJECT_ID(N'dbo.employee_data', N'U') IS NULL
-            BEGIN
-                CREATE TABLE dbo.employee_data (
-                    emp_id INT PRIMARY KEY,
-                    name VARCHAR(100),
-                    gender VARCHAR(50),
-                    email VARCHAR(100),
-                    contact VARCHAR(15),
-                    dob VARCHAR(30),
-                    address VARCHAR(150),
-                    usertype VARCHAR(50),
-                    password VARCHAR(50)
-                );
-            END
-        """)
-        conn.commit()
-        cur.close()
-        return conn
-    except Exception as e:
-        messagebox.showerror("Database Error", f"Database initialization failed: {e}")
-        return None
+    # Create database and table if they don't exist (SQL Server syntax)
+    cursor.execute("IF DB_ID('IMS') IS NULL CREATE DATABASE IMS")
+    cursor.execute("USE IMS")
+    cursor.execute("""
+    IF OBJECT_ID('dbo.employee_data', 'U') IS NULL
+    CREATE TABLE dbo.employee_data (
+        emp_id INT PRIMARY KEY,
+        name VARCHAR(100),
+        gender VARCHAR(50),
+        email VARCHAR(100),
+        contact VARCHAR(15),
+        dob VARCHAR(30),
+        address VARCHAR(150),
+        usertype VARCHAR(50),
+        password VARCHAR(50)
+    )
+    """)
+    conn.commit()
+
+    # Example: Execute a query and print results
+    cursor.execute("SELECT * FROM employee_data")
+    for row in cursor.fetchall():
+        print(row)
+
+    cursor.close()
+    conn.close()
+
+except pyodbc.Error as ex:
+    sqlstate = ex.args[0]
+    if sqlstate == '28000':
+        print("Authentication error. Check your credentials or permissions.")
+    else:
+        print(f"Database connection failed: {ex}")
 
 
-# Module-level connection (Windows Trusted Connection by default).
-# To use SQL Server auth: call connect_db(uid='sa', pwd='yourpassword', trusted=False)
-conn = connect_db()  # returns None on failure
-
-
-def fetch_employees(conn):
-    """Return all rows from employee_data as a list of tuples."""
-    if conn is None:
-        return []
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT emp_id, name, gender, email, contact, dob, address, usertype, password FROM dbo.employee_data")
-        rows = cur.fetchall()
-        cur.close()
-        return rows
-    except Exception as e:
-        messagebox.showerror("Database Error", f"Failed to fetch employees: {e}")
-        return []
 
 
 
