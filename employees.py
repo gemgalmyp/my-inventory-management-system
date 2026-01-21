@@ -5,22 +5,9 @@ from tkcalendar import DateEntry
 import pyodbc
 
 
-connection_string = (
-    "Driver={ODBC Driver 17 for SQL Server};"
-    "Server=DESKTOP-UF7FUTA\\SQLEXPRESS;"  
-    "Database=IMS;"
-    "Trusted_Connection=yes;"
-
-    # "Data Source=DESKTOP-UF7FUTA\\SQLEXPRESS;"
-    # "Integrated Security=True;"
-    # "Persist Security Info=False;"
-    # "Pooling=False;"
-    # "MultipleActiveResultSets=False;"
-    # "Encrypt=True;"
-    # "TrustServerCertificate=True;"
-    # "Application Name=SQL Server Management Studio;"
-    # "Command Timeout=30;"
-)
+server = 'DESKTOP-UF7FUTA\\SQLEXPRESS'
+database = 'IMS'
+connection_string = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};Trusted_Connection=yes;"
 
 try:
     # Establish the connection
@@ -47,22 +34,20 @@ try:
     """)
     conn.commit()
 
-    # Example: Execute a query and print results
-    cursor.execute("SELECT * FROM employee_data")
-    for row in cursor.fetchall():
-        print(row)
+    cursor.execute("SELECT @@version;")
+    row = cursor.fetchone()
+    if row:
+        print(f"Server version: {row[0]}")
 
     cursor.close()
     conn.close()
 
 except pyodbc.Error as ex:
-    sqlstate = ex.args[0]
-    if sqlstate == '28000':
-        print("Authentication error. Check your credentials or permissions.")
-    else:
-        print(f"Database connection failed: {ex}")
+    print(f"Database connection failed: {ex}")
 
 
+def add_employee(empid, name, gender, email, contact, dob, address, usertype, password):
+    print(empid, name)
 
 
 
@@ -254,7 +239,8 @@ def employee_form(window):
         cursor="hand2", 
         bg="#045517", 
         fg="white", 
-        padx=10
+        padx=10, 
+        command = lambda: add_employee(empid_entry.get(), name_entry.get(), gender_combobox.get(), email_entry.get(), contact_entry.get(), dob_date_entry.get(), address_text.get("1.0", END), usertype_combobox.get(), password_entry.get())
     )
     add_button.grid(row=0, column=0, padx=20)
 
