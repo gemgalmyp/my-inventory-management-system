@@ -7,47 +7,53 @@ import pyodbc
 
 server = 'DESKTOP-UF7FUTA\\SQLEXPRESS'
 database = 'IMS'
-connection_string = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};Trusted_Connection=yes;"
+username = 'sa'  # Change to your SQL Server username
+password = 'DBpass364_#@'  # Change to your SQL Server password
+connection_string = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password};"
 
-try:
-    # Establish the connection
-    conn = pyodbc.connect(connection_string)
-    cursor = conn.cursor()
-    print("Connection successful using Windows Authentication!")
+def connect_database():
+    try:
+        conn = pyodbc.connect(connection_string)
+        cursor = conn.cursor()
+        print("Connection successful using SQL Authentication!")
+        # Create database and table if they don't exist (SQL Server syntax)
+        cursor.execute("IF DB_ID('IMS') IS NULL CREATE DATABASE IMS")
+        cursor.execute("USE IMS")
+        cursor.execute("""
+        IF OBJECT_ID('dbo.employee_data', 'U') IS NULL
+        CREATE TABLE dbo.employee_data (
+            emp_id INT PRIMARY KEY,
+            name VARCHAR(100),
+            gender VARCHAR(50),
+            email VARCHAR(100),
+            contact VARCHAR(15),
+            dob VARCHAR(30),
+            address VARCHAR(150),
+            usertype VARCHAR(50),
+            password VARCHAR(50)
+        )
+        """)
+        conn.commit()
 
-    # Create database and table if they don't exist (SQL Server syntax)
-    cursor.execute("IF DB_ID('IMS') IS NULL CREATE DATABASE IMS")
-    cursor.execute("USE IMS")
-    cursor.execute("""
-    IF OBJECT_ID('dbo.employee_data', 'U') IS NULL
-    CREATE TABLE dbo.employee_data (
-        emp_id INT PRIMARY KEY,
-        name VARCHAR(100),
-        gender VARCHAR(50),
-        email VARCHAR(100),
-        contact VARCHAR(15),
-        dob VARCHAR(30),
-        address VARCHAR(150),
-        usertype VARCHAR(50),
-        password VARCHAR(50)
-    )
-    """)
-    conn.commit()
+        cursor.execute("SELECT @@version;")
+        row = cursor.fetchone()
+        if row:
+            print(f"Server version: {row[0]}")
 
-    cursor.execute("SELECT @@version;")
-    row = cursor.fetchone()
-    if row:
-        print(f"Server version: {row[0]}")
+        return cursor, conn
+    except pyodbc.Error as ex:
+        print(f"Database connection failed: {ex}")
+        return None, None
 
-    cursor.close()
-    conn.close()
-
-except pyodbc.Error as ex:
-    print(f"Database connection failed: {ex}")
 
 
 def add_employee(empid, name, gender, email, contact, dob, address, usertype, password):
-    print(empid, name)
+    if empid == "" or name == "" or gender == "Select Gender" or email == "" or contact == "" or dob == "" or address == "\n" or usertype == "Select User Type" or password == "":
+        messagebox.showerror("Error", "All fields are required!")
+        return
+    else:
+        connect_database()
+        # cursor.execute()
 
 
 
