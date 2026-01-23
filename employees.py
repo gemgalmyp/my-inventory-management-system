@@ -8,7 +8,7 @@ import pyodbc
 server = 'DESKTOP-UF7FUTA\\SQLEXPRESS'
 database = 'IMS'
 username = 'sa'  # Change to your SQL Server username
-password = 'DBpass364_#@'  # Change to your SQL Server password
+password = 'DBpass100'  # Change to your SQL Server password
 connection_string = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password};"
 
 def connect_database():
@@ -35,6 +35,8 @@ def connect_database():
         """)
         conn.commit()
 
+      
+
         cursor.execute("SELECT @@version;")
         row = cursor.fetchone()
         if row:
@@ -45,22 +47,45 @@ def connect_database():
         print(f"Database connection failed: {ex}")
         return None, None
 
+def treeview_data():
+    cursor, conn = connect_database()
+    if not cursor or not conn:
+        return
+    cursor.execute("SELECT * FROM employee_data")
+    employee_records = cursor.fetchall()
+    employee_treeview.delete(*employee_treeview.get_children())
+    for records in employee_records:
+        employee_treeview.insert('', END, values=records)
 
+
+    
 
 def add_employee(empid, name, gender, email, contact, dob, address, usertype, password):
-    if empid == "" or name == "" or gender == "Select Gender" or email == "" or contact == "" or dob == "" or address == "\n" or usertype == "Select User Type" or password == "":
+    if (empid == "" or name == "" or gender == "Select Gender" or email == "" or contact == "" or  address == "\n" or usertype == "Select User Type" or password == ""):
         messagebox.showerror("Error", "All fields are required!")
-        return
+    
     else:
-        connect_database()
-        # cursor.execute()
+        cursor, conn = connect_database()
+        if not cursor or not conn:
+            return
+        try:
+            cursor.execute("INSERT INTO employee_data VALUES (?,?,?,?,?,?,?,?,?)", (empid, name, gender, email, contact, dob, address, usertype, password))
+            conn.commit()
+            treeview_data()
+            messagebox.showinfo("Success", "Employee added successfully!")
+        except pyodbc.Error as ex:
+            messagebox.showerror("Database Error", f"Failed to add employee: {ex}")
+            print(f"Error adding employee: {ex}")
+        finally:
+            cursor.close()
+            conn.close()
 
 
 
 
 # Functionality Part
 def employee_form(window):
-    global back_image
+    global back_image, employee_treeview
     employee_frame = Frame(window, width=1100, height=680, bg="white")
     employee_frame.place(x=320, y=130, width=1100, height=680)
     heading_label = Label(
@@ -163,6 +188,8 @@ def employee_form(window):
     employee_treeview.column('usertype', width=120)
     employee_treeview.column('password', width=100)
 
+    treeview_data()
+
     detail_frame = Frame(employee_frame, bg="white")
     detail_frame.place(x=8, y=330, relwidth=1, height=370)
 
@@ -204,10 +231,15 @@ def employee_form(window):
     dob_label.grid(row=1, column=4, padx=20, pady=10, sticky="w")
     dob_date_entry = DateEntry(
         detail_frame, 
-        width=25, font=("Franklin Gothic Book (Headings)", 10),  
+        width=25, 
         state='readonly', 
+        font=("Franklin Gothic Book (Headings)", 10),  
         cursor="hand2",
-        date_pattern='mm/dd/yyyy'
+        date_pattern='mm/dd/yyyy',
+        background='chartreuse4',
+        foreground='white',
+        borderwidth=2,
+        year=1950
         
     )
     dob_date_entry.grid(row=1, column=5, padx=20, pady=10, sticky="w")
