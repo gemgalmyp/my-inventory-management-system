@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
-from tkcalendar import DateEntry
+from tkcalendar import Calendar, DateEntry
 import pyodbc
 
 
@@ -61,7 +61,7 @@ def treeview_data():
     
 
 def add_employee(empid, name, gender, email, contact, dob, address, usertype, password):
-    if (empid == "" or name == "" or gender == "Select Gender" or email == "" or contact == "" or  address == "\n" or usertype == "Select User Type" or password == ""):
+    if empid == "" or name == "" or gender == "Select Gender" or email == "" or contact == "" or address.strip() == "" or usertype == "Select User Type" or password == "":
         messagebox.showerror("Error", "All fields are required!")
     
     else:
@@ -178,15 +178,15 @@ def employee_form(window):
     employee_treeview.heading('usertype', text='User Type')
     employee_treeview.heading('password', text='Password')
 
-    employee_treeview.column('emp_id', width=60)
+    employee_treeview.column('emp_id', width=80)
     employee_treeview.column('name', width=200)
-    employee_treeview.column('gender', width=60)
+    employee_treeview.column('gender', width=80)
     employee_treeview.column('email', width=200)
     employee_treeview.column('contact', width=120)
     employee_treeview.column('dob', width=100)
     employee_treeview.column('address', width=200)
-    employee_treeview.column('usertype', width=120)
-    employee_treeview.column('password', width=100)
+    employee_treeview.column('usertype', width=130)
+    employee_treeview.column('password', width=150)
 
     treeview_data()
 
@@ -232,15 +232,12 @@ def employee_form(window):
     dob_date_entry = DateEntry(
         detail_frame, 
         width=25, 
+        font=("Franklin Gothic Book (Headings)", 10), 
         state='readonly', 
-        font=("Franklin Gothic Book (Headings)", 10),  
         cursor="hand2",
         date_pattern='mm/dd/yyyy',
         background='chartreuse4',
-        foreground='white',
-        borderwidth=2,
-        year=1950
-        
+        foreground='white'
     )
     dob_date_entry.grid(row=1, column=5, padx=20, pady=10, sticky="w")
 
@@ -278,7 +275,7 @@ def employee_form(window):
         bg="#045517", 
         fg="white", 
         padx=10, 
-        command = lambda: add_employee(empid_entry.get(), name_entry.get(), gender_combobox.get(), email_entry.get(), contact_entry.get(), dob_date_entry.get(), address_text.get("1.0", END), usertype_combobox.get(), password_entry.get())
+        command = lambda: add_employee(empid_entry.get(), name_entry.get(), gender_combobox.get(), email_entry.get(), contact_entry.get(), dob_date_entry.get(), address_text.get("1.0", END).strip(), usertype_combobox.get(), password_entry.get())
     )
     add_button.grid(row=0, column=0, padx=20)
 
