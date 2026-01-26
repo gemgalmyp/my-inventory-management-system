@@ -55,7 +55,7 @@ def treeview_data():
     employee_records = cursor.fetchall()
     employee_treeview.delete(*employee_treeview.get_children())
     for records in employee_records:
-        employee_treeview.insert('', END, values=records)
+        employee_treeview.insert('', END, values=tuple(records))
 
 
     
