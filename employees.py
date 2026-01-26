@@ -35,8 +35,6 @@ def connect_database():
         """)
         conn.commit()
 
-      
-
         cursor.execute("SELECT @@version;")
         row = cursor.fetchone()
         if row:
@@ -46,40 +44,68 @@ def connect_database():
     except pyodbc.Error as ex:
         print(f"Database connection failed: {ex}")
         return None, None
+    
+def create_database_and_table():
+    cursor, conn = connect_database()
+
+    cursor.execute('CREATE DATABASE IF NOT EXISTS IMS')
+    cursor.execute('USE IMS')
+    cursor.execute('CREATE TABLE IF NOT EXISTS employee_data (emp_id INT PRIMARY KEY, name VARCHAR(100), gender VARCHAR(50), email VARCHAR(100), contact VARCHAR(15), dob VARCHAR(30), address VARCHAR(150), usertype VARCHAR(50), password VARCHAR(50))')
 
 def treeview_data():
     cursor, conn = connect_database()
     if not cursor or not conn:
         return
-    cursor.execute("SELECT * FROM employee_data")
-    employee_records = cursor.fetchall()
-    employee_treeview.delete(*employee_treeview.get_children())
-    for records in employee_records:
-        employee_treeview.insert('', END, values=tuple(records))
+    cursor.execute('USE IMS')
+    try:
+        cursor.execute("SELECT * FROM employee_data")
+        employee_records = cursor.fetchall()
+        employee_treeview.delete(*employee_treeview.get_children())
+        for records in employee_records:
+            employee_treeview.insert('', END, values=tuple(records))
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Error due to {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
 
-    
-
-def add_employee(empid, name, gender, email, contact, dob, address, usertype, password):
-    if empid == "" or name == "" or gender == "Select Gender" or email == "" or contact == "" or address.strip() == "" or usertype == "Select User Type" or password == "":
+def add_employee(emp_id, name, gender, email, contact, dob, address, usertype, password):
+    if emp_id == "" or name == "" or gender == "Select Gender" or email == "" or contact == "" or address.strip() == "" or usertype == "Select User Type" or password == "":
         messagebox.showerror("Error", "All fields are required!")
     
     else:
         cursor, conn = connect_database()
         if not cursor or not conn:
             return
+        cursor.execute('USE IMS')
         try:
-            cursor.execute("INSERT INTO employee_data VALUES (?,?,?,?,?,?,?,?,?)", (empid, name, gender, email, contact, dob, address, usertype, password))
+            cursor.execute("SELECT * FROM employee_data WHERE emp_id=?", (emp_id,))
+            if cursor.fetchone():
+                messagebox.showerror("Error", "Employee ID already exists!")
+                return
+            cursor.execute("INSERT INTO employee_data VALUES (?,?,?,?,?,?,?,?,?)", (emp_id, name, gender, email, contact, dob, address, usertype, password))
             conn.commit()
             treeview_data()
             messagebox.showinfo("Success", "Employee added successfully!")
-        except pyodbc.Error as ex:
-            messagebox.showerror("Database Error", f"Failed to add employee: {ex}")
-            print(f"Error adding employee: {ex}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error due to {e}")
         finally:
             cursor.close()
             conn.close()
 
+def clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry, contact_entry, dob_date_entry, address_text, usertype_combobox, password_entry):
+    emp_id_entry.delete(0, END)
+    name_entry.delete(0, END)
+    gender_combobox.set('Select Gender')
+    email_entry.delete(0, END)
+    contact_entry.delete(0, END)
+    from datetime import date
+    dob_date_entry.set_date(date.today())
+    address_text.delete("1.0", END)
+    usertype_combobox.set('Select User Type')
+    password_entry.delete(0, END)
 
 
 
@@ -194,10 +220,10 @@ def employee_form(window):
     detail_frame.place(x=8, y=330, relwidth=1, height=370)
 
 
-    empid_label = Label(detail_frame, text="Employee ID:", font=("Franklin Gothic Book (Headings)", 10), bg="white")
-    empid_label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
-    empid_entry = Entry(detail_frame, font=("Franklin Gothic Book (Headings)", 10), width=28, bg="lemon chiffon")
-    empid_entry.grid(row=0, column=1, padx=20, pady=10, sticky="w")
+    emp_id_label = Label(detail_frame, text="Employee ID:", font=("Franklin Gothic Book (Headings)", 10), bg="white")
+    emp_id_label.grid(row=0, column=0, padx=20, pady=10, sticky="w")
+    emp_id_entry = Entry(detail_frame, font=("Franklin Gothic Book (Headings)", 10), width=28, bg="lemon chiffon")
+    emp_id_entry.grid(row=0, column=1, padx=20, pady=10, sticky="w")
 
     name_label = Label(detail_frame, text="Name:", font=("Franklin Gothic Book (Headings)", 10), bg="white")
     name_label.grid(row=0, column=2, padx=20, pady=10, sticky="w")
@@ -275,7 +301,7 @@ def employee_form(window):
         bg="#045517", 
         fg="white", 
         padx=10, 
-        command = lambda: add_employee(empid_entry.get(), name_entry.get(), gender_combobox.get(), email_entry.get(), contact_entry.get(), dob_date_entry.get(), address_text.get("1.0", END).strip(), usertype_combobox.get(), password_entry.get())
+        command = lambda: add_employee(emp_id_entry.get(), name_entry.get(), gender_combobox.get(), email_entry.get(), contact_entry.get(), dob_date_entry.get(), address_text.get("1.0", END).strip(), usertype_combobox.get(), password_entry.get())
     )
     add_button.grid(row=0, column=0, padx=20)
 
@@ -308,6 +334,9 @@ def employee_form(window):
         cursor="hand2", 
         bg="#045517", 
         fg="white", 
-        padx=10
+        padx=10,
+        command=lambda: clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry, contact_entry, dob_date_entry, address_text, usertype_combobox, password_entry)
     )
     clear_button.grid(row=0, column=3, padx=20)
+
+    create_database_and_table()
