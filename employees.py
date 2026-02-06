@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
-from tkcalendar import Calendar, DateEntry
+from tkcalendar import DateEntry
 import pyodbc
 
 
@@ -69,6 +69,9 @@ def treeview_data():
     finally:
         cursor.close()
         conn.close()
+
+def select_data(event):
+    print("Select data function called")
 
 
 def add_employee(emp_id, name, gender, email, contact, dob, address, usertype, password):
@@ -215,6 +218,7 @@ def employee_form(window):
     employee_treeview.column('password', width=150)
 
     treeview_data()
+    employee_treeview.bind('<ButtonRelease-1>', lambda e: select_data())
 
     detail_frame = Frame(employee_frame, bg="white")
     detail_frame.place(x=8, y=330, relwidth=1, height=370)
