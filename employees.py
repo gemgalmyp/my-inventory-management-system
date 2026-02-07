@@ -102,7 +102,7 @@ def select_data(event,
                           dob_date_entry, 
                           address_text, 
                           usertype_combobox, 
-                          password_entry)
+                          password_entry, False)
     emp_id_entry.insert(0, row[0])
     name_entry.insert(0, row[1])
     gender_combobox.set(row[2])
@@ -126,6 +126,7 @@ def add_employee(emp_id, name, gender, email, contact, dob, address, usertype, p
     except Exception:
         messagebox.showerror("Error", "Employee ID must be an integer")
         return
+    
 
     cursor, conn = connect_database()
     if not cursor or not conn:
@@ -136,6 +137,7 @@ def add_employee(emp_id, name, gender, email, contact, dob, address, usertype, p
         if cursor.fetchone():
             messagebox.showerror("Error", "Employee ID already exists!")
             return
+        address = address.strip()
         cursor.execute("INSERT INTO employee_data VALUES (?,?,?,?,?,?,?,?,?)", (emp_id_int, name, gender, email, contact, dob, address, usertype, password))
         conn.commit()
         treeview_data()
@@ -146,7 +148,7 @@ def add_employee(emp_id, name, gender, email, contact, dob, address, usertype, p
         cursor.close()
         conn.close()
 
-def clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry, contact_entry, dob_date_entry, address_text, usertype_combobox, password_entry):
+def clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry, contact_entry, dob_date_entry, address_text, usertype_combobox, password_entry, check):
     emp_id_entry.delete(0, END)
     name_entry.delete(0, END)
     gender_combobox.set('Select Gender')
@@ -157,7 +159,37 @@ def clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry
     address_text.delete("1.0", END)
     usertype_combobox.set('Select User Type')
     password_entry.delete(0, END)
-    employee_treeview.selection_remove(employee_treeview.selection())
+    if check:
+        employee_treeview.selection_remove(employee_treeview.selection())
+
+def update_employee(emp_id, name, gender, email, contact, dob, address, usertype, password):
+    selected = employee_treeview.selection()
+    if not selected:
+        messagebox.showerror("Error", "Please select an employee to update...")
+        return
+    else:
+        cursor, conn = connect_database()
+        if not cursor or not conn:
+            return
+        cursor.execute('USE IMS')
+        cursor.execute("SELECT * FROM employee_data WHERE emp_id=?", (emp_id,))
+        current_data = cursor.fetchone()
+        current_data = current_data[1:]
+        print(current_data)
+        address = address.strip()
+
+        new_data = (name, gender, email, contact, dob, address, usertype, password)
+        print(new_data)
+
+        if current_data == new_data:
+            messagebox.showinfo("Information", "No changes detected to update!")
+            return
+
+        cursor.execute('UPDATE employee_data SET name=?, gender=?, email=?, contact=?, dob=?, address=?, usertype=?, password=? WHERE emp_id=?', (name, gender, email, contact, dob, address, usertype, password, emp_id))
+        conn.commit()
+        
+        messagebox.showinfo("Success", "Employee updated successfully!")
+        treeview_data()
 
 
 
@@ -365,7 +397,8 @@ def employee_form(window):
         cursor="hand2", 
         bg="#045517", 
         fg="white", 
-        padx=10
+        padx=10,
+        command=lambda: update_employee(emp_id_entry.get(), name_entry.get(), gender_combobox.get(), email_entry.get(), contact_entry.get(), dob_date_entry.get(), address_text.get("1.0", END).strip(), usertype_combobox.get(), password_entry.get())
     )
     update_button.grid(row=0, column=1, padx=20)
 
@@ -388,7 +421,7 @@ def employee_form(window):
         bg="#045517", 
         fg="white", 
         padx=10,
-        command=lambda: clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry, contact_entry, dob_date_entry, address_text, usertype_combobox, password_entry)
+        command=lambda: clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry, contact_entry, dob_date_entry, address_text, usertype_combobox, password_entry, True)
     )
     clear_button.grid(row=0, column=3, padx=20)
 
