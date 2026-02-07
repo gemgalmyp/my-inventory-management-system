@@ -46,11 +46,23 @@ def connect_database():
         return None, None
     
 def create_database_and_table():
+    # `connect_database` already ensures the database and table exist for SQL Server.
+    # Call it to trigger creation logic and then close the connection.
     cursor, conn = connect_database()
-
-    cursor.execute('CREATE DATABASE IF NOT EXISTS IMS')
-    cursor.execute('USE IMS')
-    cursor.execute('CREATE TABLE IF NOT EXISTS employee_data (emp_id INT PRIMARY KEY, name VARCHAR(100), gender VARCHAR(50), email VARCHAR(100), contact VARCHAR(15), dob VARCHAR(30), address VARCHAR(150), usertype VARCHAR(50), password VARCHAR(50))')
+    if not cursor or not conn:
+        return
+    try:
+        # No-op: connect_database performed the necessary setup
+        pass
+    finally:
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 def treeview_data():
     cursor, conn = connect_database()
@@ -70,33 +82,69 @@ def treeview_data():
         cursor.close()
         conn.close()
 
-def select_data(event):
-    print("Select data function called")
+def select_data(event, 
+                emp_id_entry, 
+                name_entry, 
+                gender_combobox, 
+                email_entry, 
+                contact_entry, 
+                dob_date_entry, 
+                address_text, 
+                usertype_combobox, 
+                password_entry):
+    index = employee_treeview.selection()
+    content = employee_treeview.item(index)
+    row = content['values']
+    clear_employee_fields(emp_id_entry, 
+                          name_entry, 
+                          gender_combobox, 
+                          email_entry, contact_entry, 
+                          dob_date_entry, 
+                          address_text, 
+                          usertype_combobox, 
+                          password_entry)
+    emp_id_entry.insert(0, row[0])
+    name_entry.insert(0, row[1])
+    gender_combobox.set(row[2])
+    email_entry.insert(0, row[3])
+    contact_entry.insert(0, row[4])
+    dob_date_entry.set_date(row[5])
+    address_text.insert("1.0", row[6])
+    usertype_combobox.set(row[7])
+    password_entry.insert(0, row[8])
 
+    
 
 def add_employee(emp_id, name, gender, email, contact, dob, address, usertype, password):
     if emp_id == "" or name == "" or gender == "Select Gender" or email == "" or contact == "" or address.strip() == "" or usertype == "Select User Type" or password == "":
         messagebox.showerror("Error", "All fields are required!")
-    
-    else:
-        cursor, conn = connect_database()
-        if not cursor or not conn:
+        return
+
+    # Ensure employee id is an integer
+    try:
+        emp_id_int = int(emp_id)
+    except Exception:
+        messagebox.showerror("Error", "Employee ID must be an integer")
+        return
+
+    cursor, conn = connect_database()
+    if not cursor or not conn:
+        return
+    cursor.execute('USE IMS')
+    try:
+        cursor.execute("SELECT emp_id FROM employee_data WHERE emp_id=?", (emp_id_int,))
+        if cursor.fetchone():
+            messagebox.showerror("Error", "Employee ID already exists!")
             return
-        cursor.execute('USE IMS')
-        try:
-            cursor.execute("SELECT * FROM employee_data WHERE emp_id=?", (emp_id,))
-            if cursor.fetchone():
-                messagebox.showerror("Error", "Employee ID already exists!")
-                return
-            cursor.execute("INSERT INTO employee_data VALUES (?,?,?,?,?,?,?,?,?)", (emp_id, name, gender, email, contact, dob, address, usertype, password))
-            conn.commit()
-            treeview_data()
-            messagebox.showinfo("Success", "Employee added successfully!")
-        except Exception as e:
-            messagebox.showerror("Error", f"Error due to {e}")
-        finally:
-            cursor.close()
-            conn.close()
+        cursor.execute("INSERT INTO employee_data VALUES (?,?,?,?,?,?,?,?,?)", (emp_id_int, name, gender, email, contact, dob, address, usertype, password))
+        conn.commit()
+        treeview_data()
+        messagebox.showinfo("Success", "Employee added successfully!")
+    except Exception as e:
+        messagebox.showerror("Error", f"Error due to {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
 def clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry, contact_entry, dob_date_entry, address_text, usertype_combobox, password_entry):
     emp_id_entry.delete(0, END)
@@ -109,6 +157,7 @@ def clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry
     address_text.delete("1.0", END)
     usertype_combobox.set('Select User Type')
     password_entry.delete(0, END)
+    employee_treeview.selection_remove(employee_treeview.selection())
 
 
 
@@ -218,7 +267,7 @@ def employee_form(window):
     employee_treeview.column('password', width=150)
 
     treeview_data()
-    employee_treeview.bind('<ButtonRelease-1>', lambda e: select_data())
+   
 
     detail_frame = Frame(employee_frame, bg="white")
     detail_frame.place(x=8, y=330, relwidth=1, height=370)
@@ -343,4 +392,6 @@ def employee_form(window):
     )
     clear_button.grid(row=0, column=3, padx=20)
 
-    create_database_and_table()
+    employee_treeview.bind('<ButtonRelease-1>', lambda event: select_data(event,emp_id_entry, name_entry, gender_combobox, email_entry, contact_entry, dob_date_entry, address_text, usertype_combobox, password_entry))
+
+create_database_and_table()
