@@ -163,7 +163,7 @@ def clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry
         employee_treeview.selection_remove(employee_treeview.selection())
 
 def update_employee(emp_id, name, gender, email, contact, dob, address, usertype, password):
-    selected = employee_treeview.selection()
+    selected = employee_treeview.selection() # row selection check...this will give the index of the selected row in the treeview. If no row is selected, it will return an empty tuple.
     if not selected:
         messagebox.showerror("Error", "Please select an employee to update...")
         return
@@ -171,25 +171,56 @@ def update_employee(emp_id, name, gender, email, contact, dob, address, usertype
         cursor, conn = connect_database()
         if not cursor or not conn:
             return
-        cursor.execute('USE IMS')
-        cursor.execute("SELECT * FROM employee_data WHERE emp_id=?", (emp_id,))
-        current_data = cursor.fetchone()
-        current_data = current_data[1:]
-        print(current_data)
-        address = address.strip()
+        try:
+            cursor.execute('USE IMS')
+            cursor.execute("SELECT * FROM employee_data WHERE emp_id=?", (emp_id,))
+            current_data = cursor.fetchone()
+            current_data = current_data[1:]
+            
+            address = address.strip()
 
-        new_data = (name, gender, email, contact, dob, address, usertype, password)
-        print(new_data)
+            new_data = (name, gender, email, contact, dob, address, usertype, password)
+            
 
-        if current_data == new_data:
-            messagebox.showinfo("Information", "No changes detected to update!")
-            return
+            if current_data == new_data:
+                messagebox.showinfo("Information", "No changes detected to update!")
+                return
+       
+            cursor.execute('UPDATE employee_data SET name=?, gender=?, email=?, contact=?, dob=?, address=?, usertype=?, password=? WHERE emp_id=?', (name, gender, email, contact, dob, address, usertype, password, emp_id))
+            conn.commit()
+            treeview_data()
+            messagebox.showinfo("Success", "Employee updated successfully!")
+            
+        except Exception as e:
+             messagebox.showerror("Error", f"Error due to {e}")
+        finally:
+             cursor.close()
+             conn.close()
 
-        cursor.execute('UPDATE employee_data SET name=?, gender=?, email=?, contact=?, dob=?, address=?, usertype=?, password=? WHERE emp_id=?', (name, gender, email, contact, dob, address, usertype, password, emp_id))
-        conn.commit()
-        
-        messagebox.showinfo("Success", "Employee updated successfully!")
-        treeview_data()
+def delete_employee(emp_id):
+    selected = employee_treeview.selection() 
+    if not selected:
+        messagebox.showerror("Error", "Please select an employee to delete...")
+        return
+    else: 
+        result = messagebox.askyesno("Confirm", "Do you really want to delete the record?")
+        if result:
+            cursor, conn = connect_database()
+            if not cursor or not conn:
+                return
+            try: # use try and block so that if there is any kind of exception while deleting the record then you can handle it gracefully and show the error message to the user instead of crashing the application.
+                cursor.execute('USE IMS')
+                cursor.execute('DELETE FROM employee_data WHERE emp_id=?', (emp_id,))
+                conn.commit()
+                treeview_data()
+                messagebox.showinfo("Success", "Record deleted successfully!")
+            except Exception as e:
+                messagebox.showerror("Error", f"Error due to {e}")
+            finally:
+                cursor.close()
+                conn.close()
+
+
 
 
 
@@ -219,7 +250,7 @@ def employee_form(window):
         bd = 0,
         cursor = "hand2",
         bg="white",
-        command=lambda: employee_frame.place_forget()   
+        command=lambda: employee_frame.place_forget() #using lambda to avoid immediate execution of the function when the button is created. It won't excute automatically, it will only execute when the button is clicked...
     )
     back_button.place(x=10, y=0)
 
@@ -244,7 +275,7 @@ def employee_form(window):
     search_button = Button(
         search_frame, 
         text="Search", 
-        font=("Franklin Gothic Book (Headings)", 11), width=10,
+        font=("Franklin Gothic Book (Headings)", 11), width=10,  
         cursor="hand2", 
         bg="#045517", 
         fg="white", 
@@ -344,7 +375,6 @@ def employee_form(window):
         detail_frame, 
         width=25, 
         font=("Franklin Gothic Book (Headings)", 10), 
-        state='readonly', 
         cursor="hand2",
         date_pattern='mm/dd/yyyy',
         background='chartreuse4',
@@ -409,7 +439,8 @@ def employee_form(window):
         cursor="hand2", 
         bg="#045517", 
         fg="white", 
-        padx=10
+        padx=10,
+        command=lambda: delete_employee(emp_id_entry.get())
     )
     delete_button.grid(row=0, column=2, padx=20)
 
