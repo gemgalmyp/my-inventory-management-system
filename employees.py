@@ -220,6 +220,38 @@ def delete_employee(emp_id):
                 cursor.close()
                 conn.close()
 
+def search_employee(search_option, value):
+    if search_option == "Search By":
+        messagebox.showerror("Error", "Please select a search option!")
+        return
+    elif value.strip() == "":
+        messagebox.showerror("Error", "Please enter a search value!")
+        return
+    else:
+        search_option = search_option.replace(" ", "_")  
+        cursor, conn = connect_database()
+        if not cursor or not conn:
+            return
+        try:
+            cursor.execute('USE IMS')
+            cursor.execute(f"SELECT * FROM employee_data WHERE {search_option} LIKE ?", (f"%{value}%",))
+            records = cursor.fetchall()
+            employee_treeview.delete(*employee_treeview.get_children())
+            for record in records:
+                employee_treeview.insert('', END, values=tuple(record))
+        except Exception as e:
+              messagebox.showerror("Error", f"Error due to {e}")
+        finally:
+              cursor.close()
+              conn.close()
+
+def show_all_employees(search_entry, search_combobox):
+    treeview_data()
+    search_entry.delete(0, END)
+    search_combobox.set('Search By')
+
+
+
 
 
 
@@ -259,7 +291,7 @@ def employee_form(window):
     search_frame.pack()
     search_combobox = ttk.Combobox(
         search_frame, 
-        values=('ID', 'Name', 'Email', 'Contact'),
+        values=('Emp ID', 'Name', 'Gender', 'Email', 'Contact', 'DOB', 'Address'),
         font=("Franklin Gothic Book (Headings)", 11),
         state='readonly',
         cursor="hand2"
@@ -279,7 +311,8 @@ def employee_form(window):
         cursor="hand2", 
         bg="#045517", 
         fg="white", 
-        padx=10
+        padx=10,
+        command=lambda: search_employee(search_combobox.get(), search_entry.get())
     )
     search_button.grid(row=0, column=2, padx=20)
     show_all_button = Button(
@@ -289,7 +322,8 @@ def employee_form(window):
         cursor="hand2", 
         bg="#045517", 
         fg="white", 
-        padx=10
+        padx=10, 
+        command=lambda: show_all_employees(search_entry, search_combobox)
     )
     show_all_button.grid(row=0, column=3)
 
