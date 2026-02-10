@@ -1,7 +1,8 @@
 import os
 from tkinter import *
 from employees import employee_form
-# from PIL import Image, ImageTk # This is for handling images if needed (.jpg)
+from supplier import supplier_form
+# from PIL import Image, ImageTk # This is for handling images if needed (.jpg) (just incase we want to use .jpg images in the future, currently we are using .png which is supported by Tkinter's PhotoImage)
 
 
 
@@ -100,7 +101,8 @@ SupplierButton = Button(
     cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
-    padx=40
+    padx=40,
+    command=lambda: supplier_form(window)
 )
 SupplierButton.place(x=0, y=355, width=300, height=60)
 
