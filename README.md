@@ -1,1 +1,4 @@
-This is a GUI Inventory Management System for an electonics shop.
+GUI Inventory Management System for an electronics shop.
+* Python
+* Tkinter
+* MS SQL Server 
