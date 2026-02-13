@@ -62,9 +62,8 @@ leftFrame.place(x=0, y=130, width=300, height=680)
 
 logoImage = PhotoImage(file="label.png")
 imageLabel = Label(leftFrame, image=logoImage)
-# imageLabel.grid(row=0, column=0)
 imageLabel.place(x=0, y=5, width=300, height=200)
-# imageLabel.pack(fill=BOTH)
+
 
 # DESIGN OF THE DASHBOARD LEFT FRAME
 menuLabel = Label(
