@@ -7,9 +7,10 @@ import pyodbc
 
 server = 'DESKTOP-UF7FUTA\\SQLEXPRESS'
 database = 'IMS'
-username = 'sa'  # Change to your SQL Server username
-password = 'DBpass100'  # Change to your SQL Server password
+username = 'sa'  
+password = 'DBpass100'  
 connection_string = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password};"
+
 
 def connect_database():
     try:
@@ -30,7 +31,7 @@ def connect_database():
             dob VARCHAR(30),
             address VARCHAR(150),
             usertype VARCHAR(50),
-            password VARCHAR(50)
+            password VARCHAR(50),
         )
         """)
         conn.commit()

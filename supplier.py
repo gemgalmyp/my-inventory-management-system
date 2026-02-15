@@ -1,10 +1,98 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
+from employees import connect_database
 
+
+def treeview_data(treeview):
+    cursor, conn = connect_database()
+    try:
+        cursor.execute('USE IMS')
+        cursor.execute('SELECT invoice, name, contact, description FROM supplier_data')
+        records = cursor.fetchall()
+        try:
+            treeview.delete(*treeview.get_children())
+        except Exception:
+            pass
+        for rec in records:
+            try:
+                treeview.insert('', END, values=tuple(rec))
+            except Exception:
+                pass
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+    finally:
+        cursor.close()
+        conn.close()
+
+def create_suppliers_table():
+    cursor, conn = connect_database()
+    if not cursor or not conn:
+        return
+    try:
+        cursor.execute('USE IMS')
+        cursor.execute("""
+        IF OBJECT_ID('dbo.supplier_data', 'U') IS NULL
+        CREATE TABLE dbo.supplier_data (
+            invoice VARCHAR(20) PRIMARY KEY,
+            name VARCHAR(100),
+            contact VARCHAR(20),
+            description TEXT,
+            created_at DATETIME DEFAULT GETDATE()
+        )
+        """)
+        conn.commit()
+    except Exception as e:
+        messagebox.showerror("Error", f"Error creating suppliers table: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def add_supplier(invoice, name, contact, description, treeview):
+    if invoice == "" or name == "" or contact == "" or description.strip() == "":
+        messagebox.showerror("Error", "All fields are required!")
+        return
+
+    cursor, conn = connect_database()
+    if not cursor or not conn:
+        messagebox.showerror("Database Error", "Failed to connect to the database.")
+        return
+    try:
+        cursor.execute('USE IMS')
+        # ensure table exists
+        cursor.execute("""
+        IF OBJECT_ID('dbo.supplier_data', 'U') IS NULL
+        CREATE TABLE dbo.supplier_data (
+            invoice VARCHAR(20) PRIMARY KEY,
+            name VARCHAR(100),
+            contact VARCHAR(20),
+            description TEXT,
+            created_at DATETIME DEFAULT GETDATE()
+        )
+        """)
+
+        # check for existing invoice
+        cursor.execute('SELECT * FROM supplier_data WHERE invoice=?', (invoice,))
+        if cursor.fetchone():
+            messagebox.showerror('Error', 'Invoice already exists!')
+            return
+
+        cursor.execute('INSERT INTO supplier_data (invoice, name, contact, description) VALUES (?,?,?,?)', (invoice, name, contact, description.strip()))
+        conn.commit()
+        messagebox.showinfo('Success', 'Supplier added successfully!')
+        treeview_data(treeview)
+
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+    finally:
+        cursor.close()
+        conn.close()
+        
 
 
 def supplier_form(window):
-    global back_image  
+    global back_image, supplier_treeview
     supplier_frame = Frame(window, width=1100, height=680, bg="white")
     supplier_frame.place(x=320, y=130, width=1100, height=680)
     heading_label = Label(
@@ -76,17 +164,18 @@ def supplier_form(window):
     button_frame = Frame(left_frame, bg="#045517")
     button_frame.grid(row=4, column=0, columnspan=4, pady=50)
 
-    add_button = Button(
+    save_button = Button(
         button_frame, 
-        text="Add", 
+        text="Save", 
         font=("Franklin Gothic Book (Headings)", 12, "bold"), width=8,
         cursor="hand2", 
         bg="white", 
         fg="#045517", 
-        padx=10
+        padx=10, 
+        command = lambda: add_supplier(invoice_entry.get(), name_entry.get(), contact_entry.get(), description_text.get("1.0", END), treeview)
 
     )
-    add_button.grid(row=0, column=0, padx=20, pady=10)
+    save_button.grid(row=0, column=0, padx=20, pady=10)
 
     update_button = Button(
         button_frame, 
@@ -184,6 +273,9 @@ def supplier_form(window):
     treeview.column('name', width=200)
     treeview.column('contact', width=150)
     treeview.column('description', width=300)
+
+    # Load existing data into treeview
+    treeview_data(treeview)
 
 
 
