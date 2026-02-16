@@ -104,6 +104,7 @@ def select_data(event,
                           address_text, 
                           usertype_combobox, 
                           password_entry, False)
+    
     emp_id_entry.insert(0, row[0])
     name_entry.insert(0, row[1])
     gender_combobox.set(row[2])

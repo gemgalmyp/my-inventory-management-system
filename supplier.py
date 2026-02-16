@@ -3,6 +3,60 @@ from tkinter import ttk
 from tkinter import messagebox
 from employees import connect_database
 
+def update_supplier(invoice, name, contact, description, treeview):
+    index = treeview.selection()
+    if not index:
+        messagebox.showerror('Error', 'Please select a supplier to update!')
+        return
+    else:
+        cursor, conn = connect_database()
+        if not cursor or not conn:
+            return
+        try:
+            cursor.execute('USE IMS')
+            cursor.execute('SELECT * FROM supplier_data WHERE invoice=?', (invoice,))
+            row = cursor.fetchone()
+            if not row:
+                messagebox.showerror('Error', 'Selected supplier not found in database!')
+                return
+            
+            current_data = tuple((str(v).strip() if v is not None else "") for v in row[1:4])
+            new_data = tuple((str(v).strip() if v is not None else "") for v in (name, contact, description))
+
+            if current_data == new_data:
+                messagebox.showinfo('Information', 'No changes detected to update!')
+                return
+            
+            cursor.execute('UPDATE supplier_data SET name=?, contact=?, description=? WHERE invoice=?', (name, contact, description, invoice))
+            conn.commit()
+            messagebox.showinfo('Success', 'Supplier updated successfully!')
+            
+            treeview_data(treeview)
+
+        except Exception as e:
+            messagebox.showerror('Error', f'Error due to {e}')
+        finally:
+            cursor.close()
+            conn.close()
+
+def select_data(event, 
+                invoice_entry, 
+                name_entry, 
+                contact_entry, 
+                description_text, 
+                treeview):
+    
+    index = treeview.selection()
+    content = treeview.item(index)
+    data = content['values']
+    invoice_entry.delete(0, END)
+    invoice_entry.insert(0, data[0])
+    name_entry.delete(0, END)
+    name_entry.insert(0, data[1])
+    contact_entry.delete(0, END)
+    contact_entry.insert(0, data[2])
+    description_text.delete("1.0", END)
+    description_text.insert("1.0", data[3])
 
 def treeview_data(treeview):
     cursor, conn = connect_database()
@@ -50,7 +104,7 @@ def create_suppliers_table():
 
 
 def add_supplier(invoice, name, contact, description, treeview):
-    if invoice == "" or name == "" or contact == "" or description.strip() == "":
+    if invoice == "" or name == "" or contact == "" or description == "":
         messagebox.showerror("Error", "All fields are required!")
         return
 
@@ -78,7 +132,7 @@ def add_supplier(invoice, name, contact, description, treeview):
             messagebox.showerror('Error', 'Invoice already exists!')
             return
 
-        cursor.execute('INSERT INTO supplier_data (invoice, name, contact, description) VALUES (?,?,?,?)', (invoice, name, contact, description.strip()))
+        cursor.execute('INSERT INTO supplier_data (invoice, name, contact, description) VALUES (?,?,?,?)', (invoice, name, contact, description))
         conn.commit()
         messagebox.showinfo('Success', 'Supplier added successfully!')
         treeview_data(treeview)
@@ -172,7 +226,7 @@ def supplier_form(window):
         bg="white", 
         fg="#045517", 
         padx=10, 
-        command = lambda: add_supplier(invoice_entry.get(), name_entry.get(), contact_entry.get(), description_text.get("1.0", END), treeview)
+        command = lambda: add_supplier(invoice_entry.get(), name_entry.get(), contact_entry.get(), description_text.get("1.0", END).strip(), treeview)
 
     )
     save_button.grid(row=0, column=0, padx=20, pady=10)
@@ -184,7 +238,8 @@ def supplier_form(window):
         cursor="hand2", 
         bg="white", 
         fg="#045517", 
-        padx=10
+        padx=10,
+        command = lambda: update_supplier(invoice_entry.get(), name_entry.get(), contact_entry.get(), description_text.get("1.0", END).strip(), treeview)
 
     )
     update_button.grid(row=0, column=1, padx=20, pady=10)
@@ -276,6 +331,9 @@ def supplier_form(window):
 
     # Load existing data into treeview
     treeview_data(treeview)
+
+    # To highlight selected row and populate form fields
+    treeview.bind("<ButtonRelease-1>", lambda event: select_data(event, invoice_entry, name_entry, contact_entry, description_text, treeview))
 
 
 
