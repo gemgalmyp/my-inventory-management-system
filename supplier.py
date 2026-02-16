@@ -3,6 +3,35 @@ from tkinter import ttk
 from tkinter import messagebox
 from employees import connect_database
 
+def delete_supplier(invoice, treeview):
+    index = treeview.selection()
+    if not index:
+        messagebox.showerror('Error', 'Please select a supplier to delete!')
+        return
+    else:
+        cursor, conn = connect_database()
+        if not cursor or not conn:
+            return
+        try: 
+            cursor.execute('USE IMS')
+            cursor.execute('DELETE FROM supplier_data WHERE invoice=?', (treeview.item(index)['values'][0],))
+            conn.commit()
+            treeview_data(treeview)
+
+            messagebox.showinfo('Success', 'Supplier deleted successfully!')
+        except Exception as e:
+            messagebox.showerror('Error', f'Error due to {e}')
+        finally:
+            cursor.close()
+            conn.close()
+
+def clear_fields(invoice_entry, name_entry, contact_entry, description_text, treeview):
+    invoice_entry.delete(0, END)
+    name_entry.delete(0, END)
+    contact_entry.delete(0, END)
+    description_text.delete("1.0", END)
+    treeview.selection_remove(treeview.selection())
+        
 def update_supplier(invoice, name, contact, description, treeview):
     index = treeview.selection()
     if not index:
@@ -251,7 +280,8 @@ def supplier_form(window):
         cursor="hand2", 
         bg="white", 
         fg="#045517", 
-        padx=10
+        padx=10,
+        command = lambda: delete_supplier(invoice_entry.get(), treeview)
 
     )
     delete_button.grid(row=1, column=0, padx=20, pady=10)
@@ -263,7 +293,8 @@ def supplier_form(window):
         cursor="hand2", 
         bg="white", 
         fg="#045517", 
-        padx=10
+        padx=10,
+        command = lambda: clear_fields(invoice_entry, name_entry, contact_entry, description_text, treeview)
 
     )
     clear_button.grid(row=1, column=1, padx=20, pady=10)
