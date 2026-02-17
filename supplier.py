@@ -3,6 +3,43 @@ from tkinter import ttk
 from tkinter import messagebox
 from employees import connect_database
 
+
+def search_supplier(search_value, treeview):
+    search_value = search_value.strip()
+    if search_value == "":
+        messagebox.showerror("Error", "Please enter an invoice number to search!")
+        return
+    
+    cursor, conn = connect_database()
+    if not cursor or not conn:
+        messagebox.showerror("Error", "Failed to connect to database!")
+        return
+    
+    try:
+        cursor.execute('USE IMS')
+        cursor.execute("SELECT * FROM supplier_data WHERE invoice LIKE ?", (f"%{search_value}%",))
+        records = cursor.fetchall()
+        
+        treeview.delete(*treeview.get_children())
+        
+        if not records:
+            messagebox.showinfo("Info", "No suppliers found with that invoice number!")
+            return
+        
+        for record in records:
+            treeview.insert('', END, values=tuple(record))
+        messagebox.showinfo("Success", f"Found {len(records)} supplier(s)!")
+
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+    finally:
+        cursor.close()
+        conn.close()
+
+def show_all_suppliers(treeview, search_entry):
+    treeview_data(treeview)
+    search_entry.delete(0, END)
+
 def delete_supplier(invoice, treeview):
     index = treeview.selection()
     if not index:
@@ -31,7 +68,8 @@ def clear_fields(invoice_entry, name_entry, contact_entry, description_text, tre
     contact_entry.delete(0, END)
     description_text.delete("1.0", END)
     treeview.selection_remove(treeview.selection())
-        
+
+
 def update_supplier(invoice, name, contact, description, treeview):
     index = treeview.selection()
     if not index:
@@ -171,7 +209,6 @@ def add_supplier(invoice, name, contact, description, treeview):
     finally:
         cursor.close()
         conn.close()
-        
 
 
 def supplier_form(window):
@@ -312,6 +349,7 @@ def supplier_form(window):
                           fg="#045517"
     )
     number_label.grid(row=0, column=0, padx=15, sticky="w")
+
     search_entry = Entry(search_frame, font=("Franklin Gothic Book (Headings)", 12, "bold"), width=18, bg="lightyellow")
     search_entry.grid(row=0, column=1, padx=30, pady=10)
 
@@ -321,9 +359,8 @@ def supplier_form(window):
         font=("Franklin Gothic Book (Headings)", 11, "bold"), width=7,
         cursor="hand2", 
         bg="gray90", 
-        fg="#045517"
-      
-
+        fg="#045517",
+        command=lambda: search_supplier(search_entry.get(), treeview)
     )
     search_button.grid(row=0, column=2, padx=15)
 
@@ -334,8 +371,8 @@ def supplier_form(window):
         cursor="hand2", 
         bg="gray90", 
         fg="#045517", 
-        padx=10
-
+        padx=10,
+        command=lambda: show_all_suppliers(treeview, search_entry)
     )
     show_button.grid(row=0, column=3, padx=15)
 
