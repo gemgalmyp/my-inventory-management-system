@@ -23,7 +23,7 @@ def search_supplier(search_value, treeview):
         treeview.delete(*treeview.get_children())
         
         if not records:
-            messagebox.showinfo("Info", "No suppliers found with that invoice number!")
+            messagebox.showerror("Error", "No suppliers found with that invoice number!")
             return
         
         for record in records:

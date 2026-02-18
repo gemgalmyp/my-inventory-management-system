@@ -2,8 +2,7 @@ import os
 from tkinter import *
 from employees import employee_form
 from supplier import supplier_form
-# from PIL import Image, ImageTk # This is for handling images if needed (.jpg) (just incase we want to use .jpg images in the future, currently we are using .png which is supported by Tkinter's PhotoImage)
-
+from category import category_form
 
 
 #GUI Part
@@ -86,7 +85,7 @@ EmployeeButton = Button(
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40,
-    command=lambda: employee_form(window)
+    command = lambda: employee_form(window)
 )
 EmployeeButton.place(x=0, y=295, width=300, height=60)
 
@@ -101,7 +100,7 @@ SupplierButton = Button(
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40,
-    command=lambda: supplier_form(window)
+    command = lambda: supplier_form(window)
 )
 SupplierButton.place(x=0, y=355, width=300, height=60)
 
@@ -115,7 +114,8 @@ CategoryButton = Button(
     cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
-    padx=40
+    padx=40,
+    command = lambda: category_form(window)
 )
 CategoryButton.place(x=0, y=415, width=300, height=60)
 
