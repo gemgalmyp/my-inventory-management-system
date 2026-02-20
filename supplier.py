@@ -16,7 +16,7 @@ def search_supplier(search_value, treeview):
         return
     
     try:
-        cursor.execute('USE IMS')
+        cursor.execute("USE IMS")
         cursor.execute("SELECT * FROM supplier_data WHERE invoice LIKE ?", (f"%{search_value}%",))
         records = cursor.fetchall()
         
@@ -127,9 +127,11 @@ def select_data(event,
 
 def treeview_data(treeview):
     cursor, conn = connect_database()
+    if not cursor or not conn:
+        return
     try:
         cursor.execute('USE IMS')
-        cursor.execute('SELECT invoice, name, contact, description FROM supplier_data')
+        cursor.execute('SELECT * FROM supplier_data')
         records = cursor.fetchall()
         try:
             treeview.delete(*treeview.get_children())
@@ -184,7 +186,7 @@ def add_supplier(invoice, name, contact, description, treeview):
         # ensure table exists
         cursor.execute("""
         IF OBJECT_ID('dbo.supplier_data', 'U') IS NULL
-        CREATE TABLE IF NOT EXIST dbo.supplier_data (
+        CREATE TABLE dbo.supplier_data (
             invoice VARCHAR(20) PRIMARY KEY,
             name VARCHAR(100),
             contact VARCHAR(20),
@@ -387,15 +389,15 @@ def supplier_form(window):
     scrolly.config(command=treeview.yview)
 
     treeview.pack(fill=BOTH, expand=True, padx=10, pady=10)
-    treeview.heading('invoice', text='Invoice ID')
-    treeview.heading('name', text='Supplier Name')
-    treeview.heading('contact', text='Supplier Contact')
-    treeview.heading('description', text='Description')
+    treeview.heading("invoice", text="Invoice ID")
+    treeview.heading("name", text="Supplier Name")
+    treeview.heading("contact", text="Supplier Contact")
+    treeview.heading("description", text="Description")
 
-    treeview.column('invoice', width=80)
-    treeview.column('name', width=200)
-    treeview.column('contact', width=150)
-    treeview.column('description', width=300)
+    treeview.column("invoice", width=80)
+    treeview.column("name", width=200)
+    treeview.column("contact", width=150)
+    treeview.column("description", width=300)
 
     # Load existing data into treeview
     treeview_data(treeview)

@@ -3,8 +3,66 @@ from tkinter import ttk
 from tkinter import messagebox
 from employees import connect_database
 
+
+def treeview_data(treeview):
+    cursor, conn = connect_database()
+    if not cursor or not conn:
+        return
+    try:
+        cursor.execute('USE IMS')
+        cursor.execute('SELECT * FROM category_data')
+        records = cursor.fetchall()
+        try:
+            treeview.delete(*treeview.get_children())
+        except Exception:
+            pass
+        for rec in records:
+            try:
+                treeview.insert('', END, values=tuple(rec))
+            except Exception:
+                pass
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+    finally:
+        cursor.close()
+        conn.close()
+
+def add_category(category_id, name, description, treeview):
+    if category_id == "" or name == "" or description == "":
+        messagebox.showerror("Error", "All fields are required!")
+        return
+    else:
+        cursor, conn = connect_database()
+        if not cursor or not conn:
+            messagebox.showerror("Error", "Failed to connect to database!")
+            return
+        try:
+            cursor.execute("USE IMS")
+            cursor.execute("""
+            IF OBJECT_ID("dbo.category_data", "U") IS NULL
+            CREATE TABLE dbo.category_data (
+                category_id VARCHAR(20) PRIMARY KEY,
+                name VARCHAR(100),
+                description TEXT
+            )
+            """)
+            cursor.execute("SELECT * FROM category_data WHERE category_id=?", (category_id,))
+            if cursor.fetchone():
+                messagebox.showerror("Error", "Category ID already exists!")
+                return
+            cursor.execute('INSERT INTO category_data VALUES (?,?,?)', (category_id, name, description))
+            conn.commit()
+            messagebox.showinfo('Success', 'Category added successfully!')
+            treeview_data(treeview)
+
+        except Exception as e:
+            messagebox.showerror('Error', f'Error due to {e}')
+        finally:
+            cursor.close()
+            conn.close()
+
 def category_form(window):
-    global back_image, logo
+    global back_image, logo, category_treeview
     category_frame = Frame(window, width=1100, height=680, bg="white")
     category_frame.place(x=320, y=130, width=1100, height=680)
 
@@ -36,19 +94,19 @@ def category_form(window):
     details_frame = Frame(category_frame, bg="white")
     details_frame.place(x=570, y=50)
 
-    id_label = Label(details_frame, 
+    category_id_label = Label(details_frame, 
                           text="ID", 
                           font=("Franklin Gothic Book (Headings)", 13, "bold"), 
                           bg="white", 
                           fg="#045517"
     )
-    id_label.grid(row=0, column=0, padx=20, pady=20, sticky="w")
-    id_entry = Entry(details_frame, 
+    category_id_label.grid(row=0, column=0, padx=20, pady=20, sticky="w")
+    category_id_entry = Entry(details_frame, 
                      font=("Franklin Gothic Book (Headings)", 13, "bold"), 
                      width=30, 
                      bg="lightyellow"
     )
-    id_entry.grid(row=0, column=1, padx=10, pady=10)
+    category_id_entry.grid(row=0, column=1, padx=10, pady=10)
 
     category_name_label = Label(details_frame, 
                           text="Category Name", 
@@ -89,7 +147,8 @@ def category_form(window):
         font=("Franklin Gothic Book (Headings)", 11, "bold"), width=9,
         cursor="hand2", 
         bg="white", 
-        fg="#045517" 
+        fg="#045517",
+        command=lambda: add_category(category_id_entry.get(), category_name_entry.get(), description_text.get("1.0", END).strip(), treeview)
         
     )
     add_button.grid(row=0, column=0, padx=20, pady=9)
@@ -101,7 +160,8 @@ def category_form(window):
         font=("Franklin Gothic Book (Headings)", 11, "bold"), width=9,
         cursor="hand2", 
         bg="white", 
-        fg="#045517" 
+        fg="#045517"
+        # command=lambda: delete_category(category_id_entry.get(), treeview)
         
     )
     delete_button.grid(row=0, column=1, padx=20, pady=9)
@@ -111,16 +171,17 @@ def category_form(window):
 
     scrolly = Scrollbar(treeview_frame, orient=VERTICAL)
     scrollx = Scrollbar(treeview_frame, orient=HORIZONTAL)
-    treeview = ttk.Treeview(treeview_frame, column=('ID', 'name', 'description'), show='headings', yscrollcommand=scrolly.set, xscrollcommand=scrollx.set) 
+    treeview = ttk.Treeview(treeview_frame, column=('category_id', 'name', 'description'), show='headings', yscrollcommand=scrolly.set, xscrollcommand=scrollx.set) 
     scrolly.pack(side=RIGHT, fill=Y)
     scrollx.pack(side=BOTTOM, fill=X)
     scrollx.config(command=treeview.xview)
     scrolly.config(command=treeview.yview)
     treeview.pack(fill=BOTH, expand=True)
 
-    treeview.heading('ID', text='ID')
-    treeview.heading('name', text='Category Name')
-    treeview.heading('description', text='Description')
-    treeview.column('ID', width=80)
-    treeview.column('name', width=180)
-    treeview.column('description', width=300)
+    treeview.heading("category_id", text="Category ID")
+    treeview.heading("name", text="Category Name")
+    treeview.heading("description", text="Description")
+    treeview.column("category_id", width=80)
+    treeview.column("name", width=180)
+    treeview.column("description", width=300)
+
