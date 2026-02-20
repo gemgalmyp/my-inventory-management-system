@@ -33,8 +33,8 @@ def category_form(window):
     background_label = Label(category_frame, image=logo, bg="white")
     background_label.place(x=20, y=95)
 
-    details_frame = Frame(category_frame)
-    details_frame.place(x=580, y=70)
+    details_frame = Frame(category_frame, bg="white")
+    details_frame.place(x=570, y=50)
 
     id_label = Label(details_frame, 
                           text="ID", 
@@ -70,7 +70,7 @@ def category_form(window):
                           bg="white", 
                           fg="#045517"
     )
-    description_label.grid(row=2, column=0, padx=20, pady=20, sticky="w")
+    description_label.grid(row=2, column=0, padx=20, pady=20, sticky="nw")
     description_text = Text(details_frame, 
                             font=("Franklin Gothic Book (Headings)", 13, "bold"), 
                             width=30, 
@@ -79,3 +79,48 @@ def category_form(window):
                             bd=2
     )
     description_text.grid(row=2, column=1, padx=10, pady=15)
+
+    button_frame = Frame(category_frame, bg="white")
+    button_frame.place(x=680, y=300)
+
+    add_button = Button(
+        button_frame, 
+        text="Add", 
+        font=("Franklin Gothic Book (Headings)", 11, "bold"), width=9,
+        cursor="hand2", 
+        bg="white", 
+        fg="#045517" 
+        
+    )
+    add_button.grid(row=0, column=0, padx=20, pady=9)
+
+
+    delete_button = Button(
+        button_frame, 
+        text="Delete", 
+        font=("Franklin Gothic Book (Headings)", 11, "bold"), width=9,
+        cursor="hand2", 
+        bg="white", 
+        fg="#045517" 
+        
+    )
+    delete_button.grid(row=0, column=1, padx=20, pady=9)
+
+    treeview_frame = Frame(category_frame, bg="white")
+    treeview_frame.place(x=570, y=350, height=300, width=500)
+
+    scrolly = Scrollbar(treeview_frame, orient=VERTICAL)
+    scrollx = Scrollbar(treeview_frame, orient=HORIZONTAL)
+    treeview = ttk.Treeview(treeview_frame, column=('ID', 'name', 'description'), show='headings', yscrollcommand=scrolly.set, xscrollcommand=scrollx.set) 
+    scrolly.pack(side=RIGHT, fill=Y)
+    scrollx.pack(side=BOTTOM, fill=X)
+    scrollx.config(command=treeview.xview)
+    scrolly.config(command=treeview.yview)
+    treeview.pack(fill=BOTH, expand=True)
+
+    treeview.heading('ID', text='ID')
+    treeview.heading('name', text='Category Name')
+    treeview.heading('description', text='Description')
+    treeview.column('ID', width=80)
+    treeview.column('name', width=180)
+    treeview.column('description', width=300)
