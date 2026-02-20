@@ -184,7 +184,7 @@ def add_supplier(invoice, name, contact, description, treeview):
         # ensure table exists
         cursor.execute("""
         IF OBJECT_ID('dbo.supplier_data', 'U') IS NULL
-        CREATE TABLE dbo.supplier_data (
+        CREATE TABLE IF NOT EXIST dbo.supplier_data (
             invoice VARCHAR(20) PRIMARY KEY,
             name VARCHAR(100),
             contact VARCHAR(20),
