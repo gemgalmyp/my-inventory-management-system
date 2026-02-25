@@ -4,13 +4,22 @@ from tkinter import messagebox
 from employees import connect_database
 
 
+def clear_entries(category_id_entry, category_name_entry, description_text):
+    category_id_entry.delete(0, END)
+    category_name_entry.delete(0, END)
+    description_text.delete("1.0", END)
+
 def treeview_data(treeview):
     cursor, conn = connect_database()
     if not cursor or not conn:
         return
     try:
         cursor.execute('USE IMS')
-        cursor.execute('SELECT * FROM category_data')
+        # prefer new column name; if table still uses old schema use alias
+        try:
+            cursor.execute('SELECT category_id, category_name, description FROM category_data')
+        except Exception:
+            cursor.execute('SELECT category_id, name AS category_name, description FROM category_data')
         records = cursor.fetchall()
         try:
             treeview.delete(*treeview.get_children())
@@ -27,39 +36,52 @@ def treeview_data(treeview):
         cursor.close()
         conn.close()
 
-def add_category(category_id, name, description, treeview):
-    if category_id == "" or name == "" or description == "":
+def add_category(category_id, category_name, description, treeview):
+    if category_id == "" or category_name == "" or description == "":
         messagebox.showerror("Error", "All fields are required!")
         return
-    else:
-        cursor, conn = connect_database()
-        if not cursor or not conn:
-            messagebox.showerror("Error", "Failed to connect to database!")
-            return
-        try:
-            cursor.execute("USE IMS")
-            cursor.execute("""
-            IF OBJECT_ID("dbo.category_data", "U") IS NULL
+
+    cursor, conn = connect_database()
+    if not cursor or not conn:
+        messagebox.showerror("Error", "Failed to connect to database!")
+        return
+    try:
+        cursor.execute("USE IMS")
+        # create table if missing and migrate old column
+        cursor.execute("""
+        IF OBJECT_ID("dbo.category_data", "U") IS NULL
+        BEGIN
             CREATE TABLE dbo.category_data (
                 category_id VARCHAR(20) PRIMARY KEY,
-                name VARCHAR(100),
+                category_name VARCHAR(100),
                 description TEXT
             )
-            """)
-            cursor.execute("SELECT * FROM category_data WHERE category_id=?", (category_id,))
-            if cursor.fetchone():
-                messagebox.showerror("Error", "Category ID already exists!")
-                return
-            cursor.execute('INSERT INTO category_data VALUES (?,?,?)', (category_id, name, description))
-            conn.commit()
-            messagebox.showinfo('Success', 'Category added successfully!')
-            treeview_data(treeview)
-
-        except Exception as e:
-            messagebox.showerror('Error', f'Error due to {e}')
-        finally:
-            cursor.close()
-            conn.close()
+        END
+        IF OBJECT_ID('dbo.category_data','U') IS NOT NULL
+        BEGIN
+            IF COL_LENGTH('dbo.category_data','category_name') IS NULL
+               AND COL_LENGTH('dbo.category_data','name') IS NOT NULL
+            BEGIN
+                EXEC sp_rename 'dbo.category_data.name','category_name','COLUMN'
+            END
+        END
+        """)
+        cursor.execute("SELECT category_id FROM category_data WHERE category_id=?", (category_id,))
+        if cursor.fetchone():
+            messagebox.showerror("Error", "Category ID already exists!")
+            return
+        cursor.execute(
+            'INSERT INTO category_data (category_id, category_name, description) VALUES (?,?,?)',
+            (category_id, category_name, description)
+        )
+        conn.commit()
+        messagebox.showinfo('Success', 'Category added successfully!')
+        treeview_data(treeview)
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+    finally:
+        cursor.close()
+        conn.close()
 
 def category_form(window):
     global back_image, logo, category_treeview
@@ -139,7 +161,7 @@ def category_form(window):
     description_text.grid(row=2, column=1, padx=10, pady=15)
 
     button_frame = Frame(category_frame, bg="white")
-    button_frame.place(x=680, y=300)
+    button_frame.place(x=655, y=300)
 
     add_button = Button(
         button_frame, 
@@ -151,7 +173,7 @@ def category_form(window):
         command=lambda: add_category(category_id_entry.get(), category_name_entry.get(), description_text.get("1.0", END).strip(), treeview)
         
     )
-    add_button.grid(row=0, column=0, padx=20, pady=9)
+    add_button.grid(row=0, column=0, padx=10, pady=9)
 
 
     delete_button = Button(
@@ -164,14 +186,26 @@ def category_form(window):
         # command=lambda: delete_category(category_id_entry.get(), treeview)
         
     )
-    delete_button.grid(row=0, column=1, padx=20, pady=9)
+    delete_button.grid(row=0, column=1, padx=10, pady=9)
+
+    clear_button = Button(
+        button_frame, 
+        text="Clear", 
+        font=("Franklin Gothic Book (Headings)", 11, "bold"), width=9,
+        cursor="hand2", 
+        bg="white", 
+        fg="#045517",
+        command=lambda: clear_entries(category_id_entry, category_name_entry, description_text)
+
+    )      
+    clear_button.grid(row=0, column=2, padx=10, pady=9)
 
     treeview_frame = Frame(category_frame, bg="white")
     treeview_frame.place(x=570, y=350, height=300, width=500)
 
     scrolly = Scrollbar(treeview_frame, orient=VERTICAL)
     scrollx = Scrollbar(treeview_frame, orient=HORIZONTAL)
-    treeview = ttk.Treeview(treeview_frame, column=('category_id', 'name', 'description'), show='headings', yscrollcommand=scrolly.set, xscrollcommand=scrollx.set) 
+    treeview = ttk.Treeview(treeview_frame, column=('category_id', 'category_name', 'description'), show='headings', yscrollcommand=scrolly.set, xscrollcommand=scrollx.set) 
     scrolly.pack(side=RIGHT, fill=Y)
     scrollx.pack(side=BOTTOM, fill=X)
     scrollx.config(command=treeview.xview)
@@ -179,9 +213,9 @@ def category_form(window):
     treeview.pack(fill=BOTH, expand=True)
 
     treeview.heading("category_id", text="Category ID")
-    treeview.heading("name", text="Category Name")
+    treeview.heading("category_name", text="Category Name")
     treeview.heading("description", text="Description")
     treeview.column("category_id", width=80)
-    treeview.column("name", width=180)
+    treeview.column("category_name", width=180)
     treeview.column("description", width=300)
 

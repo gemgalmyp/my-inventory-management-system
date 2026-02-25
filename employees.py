@@ -12,28 +12,44 @@ password = 'DBpass100'
 connection_string = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password};"
 
 
+
+
+def ensure_table(cursor, table_name: str, create_sql: str):
+    """Helper to create a table only if it doesn't already exist.
+
+    The caller is responsible for issuing a USE statement before invoking
+    this helper so that the cursor is pointing at the correct database.
+    """
+    cursor.execute(
+        f"IF OBJECT_ID('dbo.{table_name}', 'U') IS NULL BEGIN {create_sql} END"
+    )
+
+
 def connect_database():
     try:
         conn = pyodbc.connect(connection_string)
         cursor = conn.cursor()
         print("Connection successful using SQL Authentication!")
-        # Create database and table if they don't exist (SQL Server syntax)
+        # make sure database exists and switch into it
         cursor.execute("IF DB_ID('IMS') IS NULL CREATE DATABASE IMS")
         cursor.execute("USE IMS")
-        cursor.execute("""
-        IF OBJECT_ID('dbo.employee_data', 'U') IS NULL
-        CREATE TABLE dbo.employee_data (
-            emp_id INT PRIMARY KEY,
-            name VARCHAR(100),
-            gender VARCHAR(50),
-            email VARCHAR(100),
-            contact VARCHAR(15),
-            dob VARCHAR(30),
-            address VARCHAR(150),
-            usertype VARCHAR(50),
-            password VARCHAR(50),
-        )
-        """)
+
+        # ensure the core employee_data table is present (other tables are
+        # handled by their respective modules via ensure_table).
+        ensure_table(cursor, 'employee_data',
+                     """
+                     CREATE TABLE dbo.employee_data (
+                         emp_id INT PRIMARY KEY,
+                         name VARCHAR(100),
+                         gender VARCHAR(50),
+                         email VARCHAR(100),
+                         contact VARCHAR(15),
+                         dob VARCHAR(30),
+                         address VARCHAR(150),
+                         usertype VARCHAR(50),
+                         password VARCHAR(50)
+                     )
+                     """)
         conn.commit()
 
         cursor.execute("SELECT @@version;")
@@ -55,6 +71,40 @@ def create_database_and_table():
     try:
         # No-op: connect_database performed the necessary setup
         pass
+    finally:
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+def check_database(required_tables: dict[str, str]):
+    """Given a mapping of table names to CREATE TABLE DDL, make sure each table
+    exists in the IMS database.  This can be called at application startup or
+    whenever you want to repair schema drift.
+
+    Example usage::
+
+        from employees import check_database
+        check_database({
+            'category_data':
+                'CREATE TABLE dbo.category_data (category_id VARCHAR(20) PRIMARY KEY, ...)',
+            'supplier_data':
+                'CREATE TABLE dbo.supplier_data (invoice VARCHAR(20) PRIMARY KEY, ...)',
+        })
+    """
+    cursor, conn = connect_database()
+    if not cursor or not conn:
+        return
+    try:
+        cursor.execute('USE IMS')
+        for table, ddl in required_tables.items():
+            ensure_table(cursor, table, ddl)
+        conn.commit()
     finally:
         try:
             cursor.close()
