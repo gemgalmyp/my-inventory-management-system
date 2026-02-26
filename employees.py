@@ -174,26 +174,41 @@ def add_employee(emp_id, name, gender, email, contact, dob, address, usertype, p
 
     # Ensure employee id is an integer
     try:
-        emp_id_int = int(emp_id)
+        emp_id = int(emp_id)
     except Exception:
         messagebox.showerror("Error", "Employee ID must be an integer")
         return
     
-
     cursor, conn = connect_database()
     if not cursor or not conn:
+        messagebox.showerror("Database Error", "Failed to connect to the database.")
         return
-    cursor.execute('USE IMS')
     try:
-        cursor.execute("SELECT emp_id FROM employee_data WHERE emp_id=?", (emp_id_int,))
+        cursor.execute('USE IMS')
+        cursor.execute("""
+        IF OBJECT_ID('dbo.employee_data', 'U') IS NULL
+        CREATE TABLE dbo.employee_data (
+            emp_id INT PRIMARY KEY,
+            name VARCHAR(100),
+            gender VARCHAR(50),
+            email VARCHAR(100),
+            contact VARCHAR(15),
+            dob DATE,
+            address TEXT,
+            usertype VARCHAR(50),
+            password VARCHAR(50)       
+        )
+        """)
+        cursor.execute("SELECT * FROM employee_data WHERE emp_id=?", (emp_id))
         if cursor.fetchone():
             messagebox.showerror("Error", "Employee ID already exists!")
             return
-        address = address.strip()
-        cursor.execute("INSERT INTO employee_data VALUES (?,?,?,?,?,?,?,?,?)", (emp_id_int, name, gender, email, contact, dob, address, usertype, password))
+       
+        cursor.execute("INSERT INTO employee_data (emp_id, name, gender, email, contact, dob, address, usertype, password) VALUES (?,?,?,?,?,?,?,?,?)", (emp_id, name, gender, email, contact, dob, address, usertype, password))
         conn.commit()
-        treeview_data()
         messagebox.showinfo("Success", "Employee added successfully!")
+        treeview_data()
+        
     except Exception as e:
         messagebox.showerror("Error", f"Error due to {e}")
     finally:
