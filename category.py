@@ -3,6 +3,85 @@ from tkinter import ttk
 from tkinter import messagebox
 from employees import connect_database
 
+def select_data(event,
+                category_id_entry, 
+                category_name_entry,  
+                description_text, 
+                treeview):
+    
+    index = treeview.selection()
+    content = treeview.item(index)
+    data = content['values']
+    category_id_entry.delete(0, END)
+    category_id_entry.insert(0, data[0])
+    category_name_entry.delete(0, END)
+    category_name_entry.insert(0, data[1])
+    description_text.delete("1.0", END)
+    description_text.insert("1.0", data[2])
+
+def clear_fields(event, category_id_entry, category_name_entry, description_text, treeview):
+    category_id_entry.delete(0, END)
+    category_name_entry.delete(0, END)
+    description_text.delete("1.0", END)
+    treeview.selection_remove(treeview.selection())
+
+def update_category(category_id, category_name, description, treeview):
+    index = treeview.selection()
+    if not index:
+        messagebox.showerror('Error', 'Please select a category to update!')
+        return
+    else:
+        cursor, conn = connect_database()
+        if not cursor or not conn:
+            return
+        try:
+            cursor.execute('USE IMS')
+            cursor.execute('SELECT * FROM category_data WHERE category_id=?', (category_id,))
+            row = cursor.fetchone()
+            if not row:
+                messagebox.showerror('Error', 'Selected category not found in database!')
+                return
+            
+            current_data = tuple((str(v).strip() if v is not None else "") for v in row[1:4])
+            new_data = tuple((str(v).strip() if v is not None else "") for v in (category_name, "", description))
+
+            if current_data == new_data:
+                messagebox.showinfo('Information', 'No changes detected to update!')
+                return
+            
+            cursor.execute('UPDATE category_data SET category_name=?, description=? WHERE category_id=?', (category_name, description, category_id))
+            conn.commit()
+            messagebox.showinfo('Success', 'Category updated successfully!')
+            
+            treeview_data(treeview)
+
+        except Exception as e:
+            messagebox.showerror('Error', f'Error due to {e}')
+        finally:
+            cursor.close()
+            conn.close()
+
+def delete_category(treeview):
+    index = treeview.selection()
+    
+    if not index:
+        messagebox.showerror('Error', 'Please select a category to delete!')
+        return
+    else:
+        cursor, conn = connect_database()
+        if not cursor or not conn:
+            return
+        try: 
+            cursor.execute('USE IMS')
+            cursor.execute('DELETE FROM category_data WHERE category_id=?', (treeview.item(index)['values'][0],))
+            conn.commit()
+            treeview_data(treeview)
+            messagebox.showinfo('Success', 'Category deleted successfully!')
+        except Exception as e:
+            messagebox.showerror('Error', f'Error due to {e}')
+        finally:
+            cursor.close()
+            conn.close()
 
 def clear_entries(category_id_entry, category_name_entry, description_text):
     category_id_entry.delete(0, END)
@@ -43,30 +122,20 @@ def add_category(category_id, category_name, description, treeview):
 
     cursor, conn = connect_database()
     if not cursor or not conn:
-        messagebox.showerror("Error", "Failed to connect to database!")
+        messagebox.showerror("Database Error", "Failed to connect to the database.")
         return
     try:
         cursor.execute("USE IMS")
         # create table if missing and migrate old column
         cursor.execute("""
-        IF OBJECT_ID("dbo.category_data", "U") IS NULL
-        BEGIN
-            CREATE TABLE dbo.category_data (
-                category_id VARCHAR(20) PRIMARY KEY,
-                category_name VARCHAR(100),
-                description TEXT
-            )
-        END
-        IF OBJECT_ID('dbo.category_data','U') IS NOT NULL
-        BEGIN
-            IF COL_LENGTH('dbo.category_data','category_name') IS NULL
-               AND COL_LENGTH('dbo.category_data','name') IS NOT NULL
-            BEGIN
-                EXEC sp_rename 'dbo.category_data.name','category_name','COLUMN'
-            END
-        END
+        IF OBJECT_ID('dbo.category_data', 'U') IS NULL
+        CREATE TABLE dbo.category_data (
+            category_id VARCHAR(20) PRIMARY KEY,
+            category_name VARCHAR(100),
+            description TEXT
+        )
         """)
-        cursor.execute("SELECT category_id FROM category_data WHERE category_id=?", (category_id,))
+        cursor.execute("SELECT * FROM category_data WHERE category_id=?", (category_id,))
         if cursor.fetchone():
             messagebox.showerror("Error", "Category ID already exists!")
             return
@@ -161,7 +230,7 @@ def category_form(window):
     description_text.grid(row=2, column=1, padx=10, pady=15)
 
     button_frame = Frame(category_frame, bg="white")
-    button_frame.place(x=655, y=300)
+    button_frame.place(x=595, y=300)
 
     add_button = Button(
         button_frame, 
@@ -182,11 +251,23 @@ def category_form(window):
         font=("Franklin Gothic Book (Headings)", 11, "bold"), width=9,
         cursor="hand2", 
         bg="white", 
-        fg="#045517"
-        # command=lambda: delete_category(category_id_entry.get(), treeview)
-        
+        fg="#045517",
+        command=lambda: delete_category(treeview)
+
     )
     delete_button.grid(row=0, column=1, padx=10, pady=9)
+
+    update_button = Button(
+        button_frame, 
+        text="Update", 
+        font=("Franklin Gothic Book (Headings)", 11, "bold"), width=9,
+        cursor="hand2", 
+        bg="white", 
+        fg="#045517",
+        command=lambda: update_category(category_id_entry.get(), category_name_entry.get(), description_text.get("1.0", END).strip(), treeview)
+        
+    )
+    update_button.grid(row=0, column=2, padx=10, pady=9)
 
     clear_button = Button(
         button_frame, 
@@ -198,7 +279,7 @@ def category_form(window):
         command=lambda: clear_entries(category_id_entry, category_name_entry, description_text)
 
     )      
-    clear_button.grid(row=0, column=2, padx=10, pady=9)
+    clear_button.grid(row=0, column=3, padx=10, pady=9)
 
     treeview_frame = Frame(category_frame, bg="white")
     treeview_frame.place(x=570, y=350, height=300, width=500)
@@ -218,4 +299,6 @@ def category_form(window):
     treeview.column("category_id", width=80)
     treeview.column("category_name", width=180)
     treeview.column("description", width=300)
+    treeview_data(treeview)
 
+    treeview.bind("<ButtonRelease-1>", lambda event: select_data(event, category_id_entry, category_name_entry, description_text, treeview))
