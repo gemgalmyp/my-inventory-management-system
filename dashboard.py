@@ -3,6 +3,7 @@ from tkinter import *
 from employees import employee_form
 from supplier import supplier_form
 from category import category_form
+from products import product_form
 
 
 #GUI Part
@@ -129,7 +130,8 @@ ProductButton = Button(
     cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
-    padx=40
+    padx=40,
+    command = lambda: product_form(window)
 )
 ProductButton.place(x=0, y=475, width=300, height=60)
 
