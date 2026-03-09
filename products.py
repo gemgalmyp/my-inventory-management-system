@@ -3,6 +3,45 @@ from tkinter import ttk
 from tkinter import messagebox
 from employees import connect_database
 
+def fetch_supplier_category(category_combobox, supplier_combobox):
+    category_option=[]
+    supplier_option=[]
+    cursor, conn = connect_database()
+    if not cursor or not conn:
+        return
+    cursor.execute("USE IMS")
+    cursor.execute("SELECT category_name FROM category_data")
+    names=cursor.fetchall()
+    for name in names:
+        category_option.append(name[0])
+    category_combobox.config(values=category_option)
+
+    cursor.execute("SELECT name FROM supplier_data")
+    names=cursor.fetchall()
+    for name in names:
+        supplier_option.append(name[0])
+    supplier_combobox.config(values=supplier_option)
+
+def add_product(category, supplier, name, price, quantity, status, treeview):
+    if category == "Empty" or supplier == "Empty" or name == "" or price == "" or quantity == "" or status == "Select Status":
+        messagebox.showerror("Error", "All fields are required!")
+        return
+
+    try:
+        price = float(price)
+        quantity = int(quantity)
+    except ValueError:
+        messagebox.showerror("Error", "Price must be a number and Quantity must be an integer")
+        return
+
+    conn = connect_database()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO products (category, supplier, name, price, quantity, status) VALUES (?, ?, ?, ?, ?, ?)", (category, supplier, name, price, quantity, status))
+    conn.commit()
+    conn.close()
+
+    messagebox.showinfo("Success", "Product added successfully")
+    treeview.insert("", END, values=(category, supplier, name, price, quantity, status))
 
 def product_form(window):
     global back_image
@@ -131,8 +170,7 @@ def product_form(window):
         font=("Franklin Gothic Book (Headings)", 11, "bold"), width=10,
         cursor="hand2", 
         bg="white", 
-        fg="#045517"
-        # command=lambda: add_category(category_id_entry.get(), category_name_entry.get(), description_text.get("1.0", END).strip(), treeview)
+        command=lambda: add_product(category_combobox.get(), supplier_combobox.get(), name_entry.get(), price_entry.get(), quantity_entry.get(), status_combobox.get(), treeview)
         
     )
     add_button.grid(row=0, column=0, padx=10, pady=20)
@@ -182,7 +220,7 @@ def product_form(window):
                                    width=20
     )
     search_combobox.grid(row=0, column=0, padx=10, pady=15)
-    search_combobox.set("Select Search Option")
+    search_combobox.set("Search By")
     search_entry = Entry(search_frame, 
                      font=("Franklin Gothic Book (Headings)", 11, "bold"), 
                      width=20, 
@@ -227,3 +265,4 @@ def product_form(window):
     treeview.heading("price", text="Price")
     treeview.heading("quality", text="Quality")
     treeview.heading("status", text="Status")
+    fetch_supplier_category(category_combobox, supplier_combobox)
