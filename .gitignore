@@ -8,4 +8,4 @@ Images
 *.env
 *pyvenv.cfg
 *.png
-!background_category.png
+!tax.png

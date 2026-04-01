@@ -5,6 +5,13 @@ from supplier import supplier_form
 from category import category_form
 from products import product_form
 
+current_frame = None
+def show_form(form_function):
+    global current_frame
+    if current_frame:
+        current_frame.place_forget()
+    current_frame = form_function(window)
+
 
 #GUI Part
 window = Tk()
@@ -62,7 +69,7 @@ leftFrame.place(x=0, y=130, width=300, height=680)
 
 logoImage = PhotoImage(file="label.png")
 imageLabel = Label(leftFrame, image=logoImage)
-imageLabel.place(x=0, y=5, width=300, height=200)
+imageLabel.place(x=0, y=6, width=300, height=200)
 
 
 # DESIGN OF THE DASHBOARD LEFT FRAME
@@ -73,7 +80,7 @@ menuLabel = Label(
     bg="#054b2e",
     fg="white"
 )
-menuLabel.place(x=0, y=210, width=300, height=70)
+menuLabel.place(x=0, y=200, width=300, height=47)
 
 # Employee Button
 employee_icon = PhotoImage(file="employees.png")
@@ -86,9 +93,9 @@ EmployeeButton = Button(
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40,
-    command = lambda: employee_form(window)
+    command = lambda: show_form(employee_form)
 )
-EmployeeButton.place(x=0, y=295, width=300, height=60)
+EmployeeButton.place(x=0, y=250, width=300, height=57)
 
 # Supplier Button
 supplier_icon = PhotoImage(file="supplier.png")
@@ -101,9 +108,9 @@ SupplierButton = Button(
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40,
-    command = lambda: supplier_form(window)
+    command = lambda: show_form(supplier_form)
 )
-SupplierButton.place(x=0, y=355, width=300, height=60)
+SupplierButton.place(x=0, y=310, width=300, height=57)
 
 # Category Button
 category_icon = PhotoImage(file="category.png")
@@ -116,9 +123,9 @@ CategoryButton = Button(
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40,
-    command = lambda: category_form(window)
+    command = lambda: show_form(category_form)
 )
-CategoryButton.place(x=0, y=415, width=300, height=60)
+CategoryButton.place(x=0, y=370, width=300, height=57)
 
 # Product Button
 product_icon = PhotoImage(file="product.png")
@@ -131,9 +138,9 @@ ProductButton = Button(
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
     padx=40,
-    command = lambda: product_form(window)
+    command = lambda: show_form(product_form)
 )
-ProductButton.place(x=0, y=475, width=300, height=60)
+ProductButton.place(x=0, y=430, width=300, height=57)
 
 # Sales Button
 sales_icon = PhotoImage(file="sales.png")
@@ -147,7 +154,21 @@ SalesButton = Button(
     anchor="w",
     padx=40
 )
-SalesButton.place(x=0, y=535, width=300, height=60)
+SalesButton.place(x=0, y=490, width=300, height=57)
+
+# Tax Button
+tax_icon = PhotoImage(file="tax.png")
+TaxButton = Button(
+    leftFrame,
+    text=" Tax",
+    image=tax_icon,
+    compound=LEFT,
+    cursor = "hand2",
+    font=("Franklin Gothic Book (Headings)", 16, "bold"),
+    anchor="w",
+    padx=40
+)
+TaxButton.place(x=0, y=550, width=300, height=57)
 
 # Exit Button
 exit_icon = PhotoImage(file="exit.png")
@@ -161,7 +182,7 @@ ExitButton = Button(
     anchor="w",
     padx=40
 )
-ExitButton.place(x=0, y=595, width=300, height=60)
+ExitButton.place(x=0, y=610, width=300, height=57)
 
 # DASHBOARD CONTENTS
 # Total Employees

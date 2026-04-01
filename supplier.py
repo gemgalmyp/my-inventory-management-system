@@ -404,6 +404,6 @@ def supplier_form(window):
 
     # To highlight selected row and populate form fields
     treeview.bind("<ButtonRelease-1>", lambda event: select_data(event, invoice_entry, name_entry, contact_entry, description_text, treeview))
-
+    return supplier_frame
 
 

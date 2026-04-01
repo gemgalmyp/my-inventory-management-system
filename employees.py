@@ -559,4 +559,6 @@ def employee_form(window):
 
     employee_treeview.bind('<ButtonRelease-1>', lambda event: select_data(event,emp_id_entry, name_entry, gender_combobox, email_entry, contact_entry, dob_date_entry, address_text, usertype_combobox, password_entry))
 
+    return employee_frame
+
 create_database_and_table()

@@ -498,3 +498,4 @@ def product_form(window):
     fetch_supplier_category(category_combobox, supplier_combobox)
     treeview_data(treeview)
     treeview.bind("<ButtonRelease-1>", lambda event: select_data(event, treeview, category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry, status_combobox))
+    return product_frame
