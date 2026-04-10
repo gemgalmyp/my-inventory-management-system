@@ -1,9 +1,58 @@
 import os
 from tkinter import *
+from tkinter import messagebox
 from employees import employee_form
 from supplier import supplier_form
 from category import category_form
 from products import product_form
+from employees import connect_database
+
+def tax_window():
+    def save_tax():
+        value = tax_count.get()
+        cursor, conn = connect_database()
+        if not cursor or not conn:
+            return
+        try:
+            cursor.execute("""
+            IF OBJECT_ID('dbo.tax_table', 'U') IS NULL
+            BEGIN
+                CREATE TABLE dbo.tax_table (
+                    id INT PRIMARY KEY,
+                    tax DECIMAL(5,2)
+                )
+            END
+            """)
+            cursor.execute("""
+            IF EXISTS (SELECT 1 FROM dbo.tax_table WHERE id = 1)
+                UPDATE dbo.tax_table SET tax = ? WHERE id = 1
+            ELSE
+                INSERT INTO dbo.tax_table (id, tax) VALUES (1, ?)
+            """, (value, value))
+            conn.commit()
+            messagebox.showinfo("Success", f"Tax is set to {value}% and saved successfully!", parent=tax_root)
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not save tax: {e}")
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
+    tax_root = Toplevel()
+    tax_root.title("Tax Management")
+    tax_root.geometry("400x220")
+    tax_root.grab_set()
+    tax_percentage = Label(tax_root, text="Please Enter Tax Percentage(%)", font=("Franklin Gothic Book (Headings)", 14))
+    tax_percentage.pack(pady=25)
+    tax_count = Spinbox(tax_root, from_=0, to=100, font=("Franklin Gothic Book (Headings)", 14))
+    tax_count.pack(pady=10)
+    save_button = Button(tax_root, text="Save", font=("Franklin Gothic Book (Headings)", 14), bg="#045517", fg="white", width=10, command=save_tax)
+    save_button.pack(pady=20)
+
 
 current_frame = None
 def show_form(form_function):
@@ -166,7 +215,8 @@ TaxButton = Button(
     cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
-    padx=40
+    padx=40,
+    command = tax_window
 )
 TaxButton.place(x=0, y=550, width=300, height=57)
 
