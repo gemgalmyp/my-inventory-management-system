@@ -128,10 +128,16 @@ def treeview_data():
             employee_treeview.insert('', END, values=tuple(records))
 
     except Exception as e:
-        messagebox.showerror("Error", f"Error due to {e}")
+            messagebox.showerror("Error", f"Error due to {e}")
     finally:
-        cursor.close()
-        conn.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 def select_data(event, 
                 emp_id_entry, 
@@ -210,10 +216,16 @@ def add_employee(emp_id, name, gender, email, contact, dob, address, usertype, p
         treeview_data()
         
     except Exception as e:
-        messagebox.showerror("Error", f"Error due to {e}")
+            messagebox.showerror("Error", f"Error due to {e}")
     finally:
-        cursor.close()
-        conn.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 def clear_employee_fields(emp_id_entry, name_entry, gender_combobox, email_entry, contact_entry, dob_date_entry, address_text, usertype_combobox, password_entry, check):
     emp_id_entry.delete(0, END)
@@ -261,8 +273,14 @@ def update_employee(emp_id, name, gender, email, contact, dob, address, usertype
         except Exception as e:
              messagebox.showerror("Error", f"Error due to {e}")
         finally:
-             cursor.close()
-             conn.close()
+             try:
+                 cursor.close()
+             except Exception:
+                 pass
+             try:
+                 conn.close()
+             except Exception:
+                 pass
 
 def delete_employee(emp_id):
     selected = employee_treeview.selection() 
@@ -284,8 +302,14 @@ def delete_employee(emp_id):
             except Exception as e:
                 messagebox.showerror("Error", f"Error due to {e}")
             finally:
-                cursor.close()
-                conn.close()
+                try:
+                    cursor.close()
+                except Exception:
+                    pass
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
 def search_employee(search_option, value):
     if search_option == "Search By":
@@ -309,8 +333,14 @@ def search_employee(search_option, value):
         except Exception as e:
               messagebox.showerror("Error", f"Error due to {e}")
         finally:
-              cursor.close()
-              conn.close()
+              try:
+                  cursor.close()
+              except Exception:
+                  pass
+              try:
+                  conn.close()
+              except Exception:
+                  pass
 
 def show_all_employees(search_entry, search_combobox):
     treeview_data()

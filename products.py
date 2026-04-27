@@ -44,10 +44,14 @@ def search_product(search_combobox, search_entry, treeview):
         except Exception as e:
             messagebox.showerror("Error", f"Error due to {e}")
         finally:
-            if cursor:
+            try:
                 cursor.close()
-            if conn:
+            except Exception:
+                pass
+            try:
                 conn.close()
+            except Exception:
+                pass
         
     
 
@@ -87,10 +91,14 @@ def delete_product(treeview, category_combobox, supplier_combobox, name_entry, p
     except Exception as e:
         messagebox.showerror('Error', f'Error due to {e}')
     finally:
-        if cursor:
+        try:
             cursor.close()
-        if conn:
+        except Exception:
+            pass
+        try:
             conn.close()
+        except Exception:
+            pass
 
 def update_product(category, supplier, name, price, quantity, status, treeview):
     selected = treeview.selection()
@@ -127,10 +135,14 @@ def update_product(category, supplier, name, price, quantity, status, treeview):
     except Exception as e:
         messagebox.showerror('Error', f'Error due to {e}')
     finally:
-        if cursor:
+        try:
             cursor.close()
-        if conn:
+        except Exception:
+            pass
+        try:
             conn.close()
+        except Exception:
+            pass
 
 def select_data(event, treeview, category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry, status_combobox):
     selected = treeview.selection()
@@ -167,10 +179,14 @@ def treeview_data(treeview):
     except Exception as e:
         messagebox.showerror('Error', f'Error due to {e}')
     finally:
-        if cursor:
+        try:
             cursor.close()
-        if conn:
+        except Exception:
+            pass
+        try:
             conn.close()
+        except Exception:
+            pass
 
 
 def fetch_supplier_category(category_combobox, supplier_combobox):
@@ -259,10 +275,14 @@ def add_product(category, supplier, name, price, quantity, status, treeview):
             messagebox.showerror("Error", f"Error due to {e}")
 
         finally:
-            if cursor:
+            try:
                 cursor.close()
-            if conn:
+            except Exception:
+                pass
+            try:
                 conn.close()
+            except Exception:
+                pass
 
 
 def product_form(window):

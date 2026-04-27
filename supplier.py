@@ -33,8 +33,14 @@ def search_supplier(search_value, treeview):
     except Exception as e:
         messagebox.showerror('Error', f'Error due to {e}')
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 def show_all_suppliers(treeview, search_entry):
     treeview_data(treeview)
@@ -59,8 +65,14 @@ def delete_supplier(invoice, treeview):
         except Exception as e:
             messagebox.showerror('Error', f'Error due to {e}')
         finally:
-            cursor.close()
-            conn.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 def clear_fields(invoice_entry, name_entry, contact_entry, description_text, treeview):
     invoice_entry.delete(0, END)
@@ -103,8 +115,14 @@ def update_supplier(invoice, name, contact, description, treeview):
         except Exception as e:
             messagebox.showerror('Error', f'Error due to {e}')
         finally:
-            cursor.close()
-            conn.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 def select_data(event, 
                 invoice_entry, 
@@ -143,10 +161,16 @@ def treeview_data(treeview):
             except Exception:
                 pass
     except Exception as e:
-        messagebox.showerror('Error', f'Error due to {e}')
+            messagebox.showerror('Error', f'Error due to {e}')
     finally:
-        cursor.close()
-        conn.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 def create_suppliers_table():
     cursor, conn = connect_database()
@@ -165,11 +189,18 @@ def create_suppliers_table():
         )
         """)
         conn.commit()
+
     except Exception as e:
-        messagebox.showerror("Error", f"Error creating suppliers table: {e}")
+            messagebox.showerror("Error", f"Error creating suppliers table: {e}")
     finally:
-        cursor.close()
-        conn.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 def add_supplier(invoice, name, contact, description, treeview):
@@ -207,10 +238,16 @@ def add_supplier(invoice, name, contact, description, treeview):
         treeview_data(treeview)
 
     except Exception as e:
-        messagebox.showerror('Error', f'Error due to {e}')
+            messagebox.showerror("Error", f"Error due to {e}")
     finally:
-        cursor.close()
-        conn.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 def supplier_form(window):

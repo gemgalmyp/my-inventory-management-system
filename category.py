@@ -58,8 +58,14 @@ def update_category(category_id, category_name, description, treeview):
         except Exception as e:
             messagebox.showerror('Error', f'Error due to {e}')
         finally:
-            cursor.close()
-            conn.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 def delete_category(treeview):
     index = treeview.selection()
@@ -80,8 +86,14 @@ def delete_category(treeview):
         except Exception as e:
             messagebox.showerror('Error', f'Error due to {e}')
         finally:
-            cursor.close()
-            conn.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 def clear_entries(category_id_entry, category_name_entry, description_text):
     category_id_entry.delete(0, END)
@@ -112,8 +124,14 @@ def treeview_data(treeview):
     except Exception as e:
         messagebox.showerror('Error', f'Error due to {e}')
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 def add_category(category_id, category_name, description, treeview):
     if category_id == "" or category_name == "" or description == "":
@@ -149,8 +167,14 @@ def add_category(category_id, category_name, description, treeview):
     except Exception as e:
         messagebox.showerror('Error', f'Error due to {e}')
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 def category_form(window):
     global back_image, logo, category_treeview
