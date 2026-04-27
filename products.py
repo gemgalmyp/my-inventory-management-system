@@ -255,6 +255,18 @@ def add_product(category, supplier, name, price, quantity, status, treeview):
                 status VARCHAR(50)
             )
             """)
+            # add columns if they don't exist
+            cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = 'product_data' AND COLUMN_NAME = 'discount')
+            ALTER TABLE product_data ADD discount INT
+            """)
+            cursor.execute("""
+            IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = 'product_data' AND COLUMN_NAME = 'discounted_price')
+            ALTER TABLE product_data ADD discounted_price DECIMAL(10,2)
+            """)
+
             cursor.execute("SELECT * FROM product_data WHERE category=? AND supplier=? AND name=?", (category, supplier, name))
             if cursor.fetchone():
                 messagebox.showerror("Error", "Product already exists!")
@@ -321,13 +333,13 @@ def product_form(window):
                           bg="white", 
                           fg="#045517"
     )
-    category_label.grid(row=1, column=0, padx=20, pady=25, sticky="w")
+    category_label.grid(row=1, column=0, padx=20, pady=20, sticky="w")
     category_combobox = ttk.Combobox(left_frame,
                                      font=("Franklin Gothic Book (Headings)", 13, "bold"),
                                      state="readonly",                                 
                                      width=28
     )
-    category_combobox.grid(row=1, column=1, padx=20, pady=25)
+    category_combobox.grid(row=1, column=1, padx=20, pady=20)
     category_combobox.set("Empty")
 
     supplier_label = Label(left_frame, 
@@ -336,13 +348,13 @@ def product_form(window):
                           bg="white", 
                           fg="#045517"
     )
-    supplier_label.grid(row=2, column=0, padx=20, pady=25, sticky="w")
+    supplier_label.grid(row=2, column=0, padx=20, pady=20, sticky="w")
     supplier_combobox = ttk.Combobox(left_frame,
                                      font=("Franklin Gothic Book (Headings)", 13, "bold"),
                                      state="readonly",                                 
                                      width=28
     )
-    supplier_combobox.grid(row=2, column=1, padx=20, pady=25)
+    supplier_combobox.grid(row=2, column=1, padx=20, pady=20)
     supplier_combobox.set("Empty")
 
     name_label = Label(left_frame, 
@@ -351,13 +363,13 @@ def product_form(window):
                           bg="white", 
                           fg="#045517"
     )
-    name_label.grid(row=3, column=0, padx=20, pady=25, sticky="w")
+    name_label.grid(row=3, column=0, padx=20, pady=20, sticky="w")
     name_entry = Entry(left_frame, 
                      font=("Franklin Gothic Book (Headings)", 13, "bold"), 
                      width=30, 
                      bg="lightyellow"
     )
-    name_entry.grid(row=3, column=1, padx=10, pady=25)
+    name_entry.grid(row=3, column=1, padx=10, pady=20)
 
     price_label = Label(left_frame, 
                           text="Price:", 
@@ -365,13 +377,23 @@ def product_form(window):
                           bg="white", 
                           fg="#045517"
     )
-    price_label.grid(row=4, column=0, padx=20, pady=25, sticky="w")
+    price_label.grid(row=4, column=0, padx=20, pady=20, sticky="w")
     price_entry = Entry(left_frame, 
                      font=("Franklin Gothic Book (Headings)", 13, "bold"), 
                      width=30, 
                      bg="lightyellow"
     )
-    price_entry.grid(row=4, column=1, padx=10, pady=25)
+    price_entry.grid(row=4, column=1, padx=10, pady=20)
+
+    discount_label = Label(left_frame, 
+                          text="Discount (%):", 
+                          font=("Franklin Gothic Book (Headings)", 13, "bold"), 
+                          bg="white", 
+                          fg="#045517"
+    )
+    discount_label.grid(row=5, column=0, padx=20, pady=20, sticky="w")
+    discount_spinbox = Spinbox(left_frame, from_=0, to=100, font=("Franklin Gothic Book (Headings)", 13, "bold"), width=28, bg="lightyellow")
+    discount_spinbox.grid(row=5, column=1, padx=10, pady=20)
 
     quantity_label = Label(left_frame, 
                           text="Quantity:", 
@@ -379,13 +401,13 @@ def product_form(window):
                           bg="white", 
                           fg="#045517"
     )
-    quantity_label.grid(row=5, column=0, padx=20, pady=25, sticky="w")
+    quantity_label.grid(row=6, column=0, padx=20, pady=20, sticky="w")
     quantity_entry = Entry(left_frame, 
                      font=("Franklin Gothic Book (Headings)", 13, "bold"), 
                      width=30, 
                      bg="lightyellow"
     )
-    quantity_entry.grid(row=5, column=1, padx=10, pady=25)
+    quantity_entry.grid(row=6, column=1, padx=10, pady=20)
 
     status_label = Label(left_frame, 
                           text="Status:", 
@@ -393,18 +415,18 @@ def product_form(window):
                           bg="white", 
                           fg="#045517"
     )
-    status_label.grid(row=6, column=0, padx=20, pady=25, sticky="w")
+    status_label.grid(row=7, column=0, padx=20, pady=20, sticky="w")
     status_combobox = ttk.Combobox(left_frame,
                                    values=("Active", "Inactive"),
                                    font=("Franklin Gothic Book (Headings)", 13, "bold"),
                                    state="readonly",                                 
                                    width=28
     )
-    status_combobox.grid(row=6, column=1, padx=20, pady=25)
+    status_combobox.grid(row=7, column=1, padx=20, pady=20)
     status_combobox.set("Select Status")
 
     button_frame = Frame(left_frame, bg="white")
-    button_frame.grid(row=7, columnspan=2, pady=(30, 0))
+    button_frame.grid(row=8, columnspan=2, pady=(30, 0))
 
     add_button = Button(
         button_frame, 
@@ -412,6 +434,7 @@ def product_form(window):
         font=("Franklin Gothic Book (Headings)", 11, "bold"), width=10,
         cursor="hand2", 
         bg="white", 
+        fg="#045517",
         command=lambda: add_product(category_combobox.get(), supplier_combobox.get(), name_entry.get(), price_entry.get(), quantity_entry.get(), status_combobox.get(), treeview)
         
     )
@@ -494,7 +517,7 @@ def product_form(window):
     treeview_frame.place(x=520, y=140, width=570, height=515)
     scrolly = Scrollbar(treeview_frame, orient=VERTICAL)
     scrollx = Scrollbar(treeview_frame, orient=HORIZONTAL)
-    treeview = ttk.Treeview(treeview_frame, column=("id", "category", "supplier", "name", "price", "quantity", "status"), show='headings', yscrollcommand=scrolly.set, xscrollcommand=scrollx.set) 
+    treeview = ttk.Treeview(treeview_frame, column=("id", "category", "supplier", "name", "price", "discount", "discounted_price", "quantity", "status"), show='headings', yscrollcommand=scrolly.set, xscrollcommand=scrollx.set) 
     scrolly.pack(side=RIGHT, fill=Y)
     scrollx.pack(side=BOTTOM, fill=X)
     scrollx.config(command=treeview.xview)
@@ -506,6 +529,8 @@ def product_form(window):
     treeview.heading("supplier", text="Supplier")
     treeview.heading("name", text="Product Name")
     treeview.heading("price", text="Price")
+    treeview.heading("discount", text="Discount")
+    treeview.heading("discounted_price", text="Discounted Price")
     treeview.heading("quantity", text="Quantity")
     treeview.heading("status", text="Status")
     treeview.column("id", width=50)
