@@ -6,6 +6,34 @@ from supplier import supplier_form
 from category import category_form
 from products import product_form
 from employees import connect_database
+import time
+
+def update():
+    cursor, conn = connect_database()
+    if not cursor or not conn:
+        return
+    cursor.execute("USE IMS")
+    cursor.execute("SELECT COUNT(*) FROM employee_data")
+    emp_records = cursor.fetchall()
+    total_emp_count_label.config(text=str(emp_records[0][0]))
+    
+    cursor.execute("SELECT COUNT(*) FROM supplier_data")
+    sup_records = cursor.fetchall()
+    total_sup_count_label.config(text=str(sup_records[0][0]))
+
+    cursor.execute("SELECT COUNT(*) FROM category_data")
+    cat_records = cursor.fetchall()
+    total_cat_count_label.config(text=str(cat_records[0][0]))
+
+    cursor.execute("SELECT COUNT(*) FROM product_data")
+    prod_records = cursor.fetchall()
+    total_prod_count_label.config(text=str(prod_records[0][0]))
+
+    date_time = time.strftime("%I:%M:%S %p on %A, %B %d, %Y")
+    subtitleLabel.config(text = f"Welcome Admin\t\t\t\t\t\t\t {date_time}")
+    subtitleLabel.after(400, update)
+    
+
 
 def tax_window():
     def save_tax():
@@ -107,7 +135,7 @@ logoutButton.place(x=1280, y=20)
 subtitleLabel = Label(
     window, 
     text = "Welcome Admin\t\t\t\t\t Date: 12/27/2025\t\t\t\t\t Time: 5:11:05 AM",
-    font=("Franklin Gothic Book (Headings)", 12, "bold"),
+    font=("Franklin Gothic Book (Headings)", 14, "bold"),
     bg="#7a7979",
     fg="white"
 )
@@ -395,7 +423,6 @@ total_sales_count_label = Label(
 )
 total_sales_count_label.pack()
 
-
-
+update()
 
 window.mainloop()
