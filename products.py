@@ -27,9 +27,23 @@ def search_product(search_combobox, search_entry, treeview):
             if not cursor or not conn:
                 return
             cursor.execute("USE IMS")
-            cursor.execute(f"SELECT * FROM product_data WHERE {search_column} LIKE ?", ('%' + search_entry.get() + '%',))
+            cursor.execute("""
+            SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = 'product_data' AND COLUMN_NAME IN ('discount', 'discounted_price')
+            """)
+            existing_columns = [row[0] for row in cursor.fetchall()]
+            if 'discount' in existing_columns and 'discounted_price' in existing_columns:
+                cursor.execute(
+                    f"SELECT id, category, supplier, name, price, discount, discounted_price, quantity, status FROM product_data WHERE {search_column} LIKE ?",
+                    ('%' + search_entry.get() + '%',)
+                )
+            else:
+                cursor.execute(
+                    f"SELECT id, category, supplier, name, price, 0 AS discount, 0 AS discounted_price, quantity, status FROM product_data WHERE {search_column} LIKE ?",
+                    ('%' + search_entry.get() + '%',)
+                )
             records = cursor.fetchall()
-            if len(records)==0:
+            if len(records) == 0:
                 messagebox.showerror("Error", "No matching products found!")
                 return
             try:
@@ -55,16 +69,18 @@ def search_product(search_combobox, search_entry, treeview):
         
     
 
-def clear_fields(category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry, status_combobox, treeview):
+def clear_fields(category_combobox, supplier_combobox, name_entry, price_entry, discount_spinbox, quantity_entry, status_combobox, treeview):
     treeview.selection_remove(treeview.selection())
     category_combobox.set("Select")
     supplier_combobox.set("Select")
     name_entry.delete(0, END)
     price_entry.delete(0, END)
+    discount_spinbox.delete(0, END)
     quantity_entry.delete(0, END)
     status_combobox.set("Select Status")
+  
 
-def delete_product(treeview, category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry, status_combobox):
+def delete_product(treeview, category_combobox, supplier_combobox, name_entry, price_entry, discount_spinbox, quantity_entry, status_combobox):
     selected = treeview.selection()
     
     if not selected:
@@ -87,7 +103,7 @@ def delete_product(treeview, category_combobox, supplier_combobox, name_entry, p
         conn.commit()
         treeview_data(treeview)
         messagebox.showinfo('Success', 'Product deleted successfully!')
-        clear_fields(category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry, status_combobox, treeview)
+        clear_fields(category_combobox, supplier_combobox, name_entry, price_entry, discount_spinbox, quantity_entry, status_combobox, treeview)
     except Exception as e:
         messagebox.showerror('Error', f'Error due to {e}')
     finally:
@@ -100,7 +116,7 @@ def delete_product(treeview, category_combobox, supplier_combobox, name_entry, p
         except Exception:
             pass
 
-def update_product(category, supplier, name, price, quantity, status, treeview):
+def update_product(category, supplier, name, price, discount, quantity, status, treeview):
     selected = treeview.selection()
     if not selected:
         messagebox.showerror("Error", "Please select a product to update!")
@@ -108,16 +124,21 @@ def update_product(category, supplier, name, price, quantity, status, treeview):
     item = selected[0]
     id = treeview.item(item)['values'][0]
     current = treeview.item(item)['values']
-    if current[1] == category and current[2] == supplier and current[3] == name and str(current[4]) == price and str(current[5]) == quantity and current[6] == status:
+    if current[1] == category and current[2] == supplier and current[3] == name and str(current[4]) == price and str(current[5]) == str(discount) and str(current[7]) == quantity and current[8] == status:
         messagebox.showinfo('Information', 'No changes detected to update!')
         return
     
     try:
         price_val = decimal.Decimal(price)
+        discount_val = int(discount)
         quantity_val = int(quantity)
     except ValueError:
-        messagebox.showerror("Error", "Invalid price or quantity format!")
+        messagebox.showerror("Error", "Invalid price, discount or quantity format!")
         return
+    if discount_val < 0 or discount_val > 100:
+        messagebox.showerror("Error", "Discount must be between 0 and 100!")
+        return
+    discounted_price = price_val * (decimal.Decimal(100) - decimal.Decimal(discount_val)) / decimal.Decimal(100)
     
     cursor, conn = None, None
     try:
@@ -126,8 +147,8 @@ def update_product(category, supplier, name, price, quantity, status, treeview):
             return
         cursor.execute('USE IMS')
         cursor.execute(
-            'UPDATE product_data SET category=?, supplier=?, name=?, price=?, quantity=?, status=? WHERE id=?',
-            (category, supplier, name, price_val, quantity_val, status, id)
+            'UPDATE product_data SET category=?, supplier=?, name=?, price=?, discount=?, discounted_price=?, quantity=?, status=? WHERE id=?',
+            (category, supplier, name, price_val, discount_val, discounted_price, quantity_val, status, id)
         )
         conn.commit()
         messagebox.showinfo('Success', 'Product updated successfully!')
@@ -144,7 +165,7 @@ def update_product(category, supplier, name, price, quantity, status, treeview):
         except Exception:
             pass
 
-def select_data(event, treeview, category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry, status_combobox):
+def select_data(event, treeview, category_combobox, supplier_combobox, name_entry, price_entry, discount_spinbox, quantity_entry, status_combobox):
     selected = treeview.selection()
     if selected:
         item = selected[0]
@@ -155,9 +176,11 @@ def select_data(event, treeview, category_combobox, supplier_combobox, name_entr
         name_entry.insert(0, values[3])
         price_entry.delete(0, END)
         price_entry.insert(0, values[4])
+        discount_spinbox.delete(0, END)
+        discount_spinbox.insert(0, values[5])
         quantity_entry.delete(0, END)
-        quantity_entry.insert(0, values[5])
-        status_combobox.set(values[6])
+        quantity_entry.insert(0, values[7])
+        status_combobox.set(values[8])
 
 def treeview_data(treeview):
     cursor, conn = connect_database()
@@ -165,7 +188,15 @@ def treeview_data(treeview):
         return
     try:
         cursor.execute('USE IMS')
-        cursor.execute('SELECT * FROM product_data')
+        cursor.execute("""
+        SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'product_data' AND COLUMN_NAME IN ('discount', 'discounted_price')
+        """)
+        existing_columns = [row[0] for row in cursor.fetchall()]
+        if 'discount' in existing_columns and 'discounted_price' in existing_columns:
+            cursor.execute('SELECT id, category, supplier, name, price, discount, discounted_price, quantity, status FROM product_data')
+        else:
+            cursor.execute('SELECT id, category, supplier, name, price, 0 AS discount, 0 AS discounted_price, quantity, status FROM product_data')
         records = cursor.fetchall()
         try:
             treeview.delete(*treeview.get_children())
@@ -221,7 +252,7 @@ def fetch_supplier_category(category_combobox, supplier_combobox):
         if conn:
             conn.close()
 
-def add_product(category, supplier, name, price, quantity, status, treeview):
+def add_product(category, supplier, name, price, discount, quantity, status, treeview):
     if category == "Empty":
         messagebox.showerror("Error", "Please add categories")
     elif supplier == "Empty":
@@ -231,10 +262,15 @@ def add_product(category, supplier, name, price, quantity, status, treeview):
     else:
         try:
             price_val = decimal.Decimal(price)
+            discount_val = int(discount)
             quantity_val = int(quantity)
         except ValueError:
-            messagebox.showerror("Error", "Invalid price or quantity format!")
+            messagebox.showerror("Error", "Invalid price, discount or quantity format!")
             return
+        if discount_val < 0 or discount_val > 100:
+            messagebox.showerror("Error", "Discount must be between 0 and 100!")
+            return
+        discounted_price = price_val * (decimal.Decimal(100) - decimal.Decimal(discount_val)) / decimal.Decimal(100)
         
         cursor, conn = None, None
         try:
@@ -251,30 +287,35 @@ def add_product(category, supplier, name, price, quantity, status, treeview):
                 supplier VARCHAR(250),
                 name VARCHAR(100),
                 price DECIMAL(10, 2),
+                discount INT,
+                discounted_price DECIMAL(10,2),
                 quantity INT,
                 status VARCHAR(50)
             )
             """)
-            # add columns if they don't exist
+            
+            # add discount column if it doesn't exist
             cursor.execute("""
             IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
             WHERE TABLE_NAME = 'product_data' AND COLUMN_NAME = 'discount')
-            ALTER TABLE product_data ADD discount INT
+            ALTER TABLE product_data ADD discount INT DEFAULT 0
             """)
+            
+            # add discounted_price column if it doesn't exist
             cursor.execute("""
             IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
             WHERE TABLE_NAME = 'product_data' AND COLUMN_NAME = 'discounted_price')
-            ALTER TABLE product_data ADD discounted_price DECIMAL(10,2)
+            ALTER TABLE product_data ADD discounted_price DECIMAL(10,2) DEFAULT 0
             """)
 
-            cursor.execute("SELECT * FROM product_data WHERE category=? AND supplier=? AND name=?", (category, supplier, name))
+            cursor.execute("SELECT id, category, supplier, name, price, discount, discounted_price, quantity, status FROM product_data WHERE category=? AND supplier=? AND name=?", (category, supplier, name))
             if cursor.fetchone():
                 messagebox.showerror("Error", "Product already exists!")
                 return
             
             cursor.execute(
-                "INSERT INTO product_data (category, supplier, name, price, quantity, status) VALUES (?,?,?,?,?,?)",
-                (category, supplier, name, price_val, quantity_val, status)
+                "INSERT INTO product_data (category, supplier, name, price, discount, discounted_price, quantity, status) VALUES (?,?,?,?,?,?,?,?)",
+                (category, supplier, name, price_val, discount_val, discounted_price, quantity_val, status)
             )
             conn.commit()
             messagebox.showinfo("Success", "Product added successfully!")
@@ -435,7 +476,7 @@ def product_form(window):
         cursor="hand2", 
         bg="white", 
         fg="#045517",
-        command=lambda: add_product(category_combobox.get(), supplier_combobox.get(), name_entry.get(), price_entry.get(), quantity_entry.get(), status_combobox.get(), treeview)
+        command=lambda: add_product(category_combobox.get(), supplier_combobox.get(), name_entry.get(), price_entry.get(), discount_spinbox.get(), quantity_entry.get(), status_combobox.get(), treeview)
         
     )
     add_button.grid(row=0, column=0, padx=10, pady=20)
@@ -447,7 +488,7 @@ def product_form(window):
         cursor="hand2", 
         bg="white", 
         fg="#045517",
-        command=lambda: update_product(category_combobox.get(), supplier_combobox.get(), name_entry.get(), price_entry.get(), quantity_entry.get(), status_combobox.get(), treeview)
+        command=lambda: update_product(category_combobox.get(), supplier_combobox.get(), name_entry.get(), price_entry.get(), discount_spinbox.get(), quantity_entry.get(), status_combobox.get(), treeview)
         
     )
     update_button.grid(row=0, column=1, padx=10, pady=20)
@@ -459,7 +500,7 @@ def product_form(window):
         cursor="hand2", 
         bg="white", 
         fg="#045517",
-        command=lambda: delete_product(treeview, category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry, status_combobox)
+        command=lambda: delete_product(treeview, category_combobox, supplier_combobox, name_entry, price_entry, discount_spinbox, quantity_entry, status_combobox)
         
     )
     delete_button.grid(row=0, column=2, padx=10, pady=20)
@@ -471,7 +512,7 @@ def product_form(window):
         cursor="hand2", 
         bg="white", 
         fg="#045517",
-        command=lambda: clear_fields(category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry, status_combobox, treeview)
+        command=lambda: clear_fields(category_combobox, supplier_combobox, name_entry, price_entry, discount_spinbox, quantity_entry, status_combobox, treeview)
         
     )
     clear_button.grid(row=0, column=3, padx=10, pady=20)
@@ -542,5 +583,5 @@ def product_form(window):
     treeview.column("status", width=70)
     fetch_supplier_category(category_combobox, supplier_combobox)
     treeview_data(treeview)
-    treeview.bind("<ButtonRelease-1>", lambda event: select_data(event, treeview, category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry, status_combobox))
+    treeview.bind("<ButtonRelease-1>", lambda event: select_data(event, treeview, category_combobox, supplier_combobox, name_entry, price_entry, discount_spinbox, quantity_entry, status_combobox))
     return product_frame
