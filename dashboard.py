@@ -6,6 +6,7 @@ from supplier import supplier_form
 from category import category_form
 from products import product_form
 from employees import connect_database
+from sales import sales_form
 import time
 
 def update():
@@ -229,7 +230,8 @@ SalesButton = Button(
     cursor = "hand2",
     font=("Franklin Gothic Book (Headings)", 16, "bold"),
     anchor="w",
-    padx=40
+    padx=40,
+    command = lambda: show_form(sales_form)
 )
 SalesButton.place(x=0, y=490, width=300, height=57)
 
